@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Member {
+  id                    String             @id @default(cuid())
+  name                  String
+  prn                   String             @unique
+  department            String
+  basePoints            Int                @default(0)
+  status                String             @default("active")
+  joinDate              String
+  
+  // EWS Treatment Info
+  treatmentActive       Boolean            @default(false)
+  treatmentStartDate    String?
+  treatmentStartPoints  Int?
+  treatmentTargetPoints Int?
+  treatmentDurationDays Int?
+  treatmentPath         String?
+
+  attendances           AttendanceRecord[]
+  pointLogs             PointLog[]
+  user                  User?
+}
+
+model User {
+  id        String   @id @default(cuid())
+  role      String   // "ADMIN" or "PENGURUS"
+  email     String?  @unique
+  prn       String?  @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+
+  memberId  String?  @unique
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+}
+
+model PointLog {
+  id          String   @id @default(cuid())
+  memberId    String
+  type        String   // "REWARD" or "PUNISHMENT"
+  category    String   // e.g., "Pelanggaran Atribut", "Mentor Internal"
+  points      Int      // The exact point value (e.g., 15, -6)
+  description String   // Admin notes
+  createdAt   DateTime @default(now())
+  
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id          String             @id @default(cuid())
+  name        String
+  date        String
+  description String
+  scope       String
+  attendees   AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  memberId   String
+  activityId String
+  status     String
+  
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, activityId])
+}
+
+model PointCategory {
+  id      String   @id @default(cuid())
+  type    String   // "REWARD" or "PUNISHMENT"
+  label   String   // The display name
+  value   String   // The unique value name
+  points  Int      // The default points value
+}
