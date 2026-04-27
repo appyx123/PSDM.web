@@ -11,6 +11,8 @@ import { ActivitiesView } from '@/components/activities-view';
 import { GovernanceView } from '@/components/governance-view';
 import { PointMutationView } from '@/components/point-mutation-view';
 import { MemberProfileView } from '@/components/member-profile-view';
+import { UserProfileMenuPengurus } from '@/components/user-profile-menu-pengurus';
+import { Bell } from 'lucide-react';
 
 export type TreatmentPath = 'REDEMPTION' | 'FULL_ATTENDANCE';
 
@@ -402,15 +404,28 @@ export default function DashboardPage() {
     return (
       <div className="flex h-screen bg-slate-50">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader
-            userName={session.name}
-            userEmail={session.prn || ''}
-            onSearch={() => {}}
-            searchResultCount={0}
-            totalCount={0}
-            showSearch={false}
-            onLogout={handleLogout}
-          />
+          {/* Header khusus Pengurus */}
+          <header className="bg-white border-b border-slate-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">P</span>
+                </div>
+                <span className="text-sm font-semibold text-slate-700">PSDM System</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                  <Bell className="w-5 h-5 text-slate-600" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <UserProfileMenuPengurus
+                  userName={session.name}
+                  userPrn={session.prn}
+                  userImage={(session as any).image}
+                />
+              </div>
+            </div>
+          </header>
           <main className="flex-1 overflow-auto">
             <div className="p-6">
               {isLoading ? (
@@ -438,6 +453,7 @@ export default function DashboardPage() {
         <DashboardHeader
           userName={session?.name || 'Admin'}
           userEmail="admin@psdm.id"
+          userRole={session?.role}
           onSearch={setSearchQuery}
           searchResultCount={filteredMembers.length}
           totalCount={members.length}

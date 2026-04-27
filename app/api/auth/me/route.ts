@@ -18,26 +18,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Sesi tidak valid.' }, { status: 401 });
     }
 
-    // Auto-seed admin if no users exist
-    const userCount = await prisma.user.count();
-    if (userCount === 0) {
-      const hashedPw = await hashPassword('admin123');
-      await prisma.user.create({
-        data: {
-          role: 'ADMIN',
-          email: 'admin@psdm.id',
-          name: 'Administrator',
-          password: hashedPw,
-        }
-      });
+    // Fetch latest user data from DB to get image
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        role: true,
+        name: true,
+        prn: true,
+        memberId: true,
+        image: true,
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User tidak ditemukan.' }, { status: 404 });
     }
 
     return NextResponse.json({
-      userId: payload.userId,
-      role: payload.role,
-      name: payload.name,
-      memberId: payload.memberId,
-      prn: payload.prn,
+      userId: user.id,
+      role: user.role,
+      name: user.name,
+      memberId: user.memberId,
+      prn: user.prn,
+      image: user.image,
     });
   } catch (error) {
     console.error('Auth check error:', error);

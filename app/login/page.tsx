@@ -93,13 +93,17 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
+              <input type="text" name="fakeusernameremembered" autoComplete="off" className="hidden" />
+              <input type="password" name="fakepasswordremembered" autoComplete="off" className="hidden" />
               {mode === 'admin' ? (
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-medium">Email Admin</Label>
                   <Input
                     type="email"
+                    name="email"
                     placeholder="admin@psdm.id"
+                    autoComplete="off"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
@@ -111,7 +115,9 @@ export default function LoginPage() {
                   <Label className="text-slate-700 font-medium">PRN (ID Pengurus)</Label>
                   <Input
                     type="text"
+                    name="prn"
                     placeholder="Contoh: PRN0252"
+                    autoComplete="off"
                     value={prn}
                     onChange={e => setPrn(e.target.value)}
                     required
@@ -124,7 +130,9 @@ export default function LoginPage() {
                 <Label className="text-slate-700 font-medium">Password</Label>
                 <Input
                   type="password"
+                  name="password"
                   placeholder="Masukkan password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required

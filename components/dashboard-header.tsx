@@ -8,6 +8,7 @@ import { ProfileSettingsModal } from '@/components/profile-settings-modal';
 interface DashboardHeaderProps {
   userName?: string;
   userEmail?: string;
+  userRole?: string;
   onSearch?: (query: string) => void;
   searchResultCount?: number;
   totalCount?: number;
@@ -18,6 +19,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ 
   userName = 'Admin User',
   userEmail = 'admin@perisai.com',
+  userRole = 'ADMIN',
   onSearch,
   searchResultCount = 0,
   totalCount = 0,
@@ -85,7 +87,7 @@ export function DashboardHeader({
             <UserProfileMenu
               userName={userName}
               userEmail={userEmail}
-              onProfileClick={() => setProfileSettingsOpen(true)}
+              userRole={userRole}
               onSettingsClick={() => setProfileSettingsOpen(true)}
               onLogoutClick={onLogout}
             />
@@ -93,7 +95,7 @@ export function DashboardHeader({
         </div>
       </header>
 
-      {/* Profile Settings Modal */}
+      {/* Profile Settings Modal (Admin only) */}
       <ProfileSettingsModal
         open={profileSettingsOpen}
         onOpenChange={setProfileSettingsOpen}

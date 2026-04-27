@@ -13,7 +13,9 @@ import {
 interface UserProfileMenuProps {
   userName?: string;
   userEmail?: string;
+  userRole?: string;
   onProfileClick?: () => void;
+  onEditProfileClick?: () => void;
   onSettingsClick?: () => void;
   onLogoutClick?: () => void;
 }
@@ -21,7 +23,9 @@ interface UserProfileMenuProps {
 export function UserProfileMenu({
   userName = 'Admin User',
   userEmail = 'admin@perisai.com',
+  userRole = 'ADMIN',
   onProfileClick,
+  onEditProfileClick,
   onSettingsClick,
   onLogoutClick,
 }: UserProfileMenuProps) {
@@ -53,6 +57,16 @@ export function UserProfileMenu({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
+        {userRole === 'PENGURUS' && (
+          <>
+            <DropdownMenuItem onClick={onEditProfileClick} className="cursor-pointer">
+              <User className="w-4 h-4 mr-2" />
+              <span>Edit Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
 
         <DropdownMenuItem onClick={onSettingsClick} className="cursor-pointer">
           <Settings className="w-4 h-4 mr-2" />

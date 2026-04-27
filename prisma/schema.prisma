@@ -41,6 +41,21 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
+  // Profile fields
+  fullName           String?
+  gender             String?
+  originCity         String?
+  originCityOther    String?
+  domicileCity       String?
+  domicileCityOther  String?
+  angkatan           String?
+  nim                String?
+  faculty            String?
+  majorProgram       String?
+  phoneNumber        String?
+  instagram          String?
+  image              String?
+
   memberId  String?  @unique
   member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
 }
