@@ -51,6 +51,12 @@ export function AttendanceModal({
   if (!activity) return null;
 
   const handleStatusChange = async (member: Member, newStatus: string, isEmergency = false, reason = '') => {
+    // If status is IZIN_SAKIT and no reason is provided yet, show the modal
+    if (newStatus === 'IZIN_SAKIT' && !reason) {
+      setEmergencyModalMember(member);
+      return;
+    }
+
     setIsUpdating(member.id);
     try {
       await onUpdateAttendance(
@@ -62,6 +68,8 @@ export function AttendanceModal({
       );
     } catch (error: any) {
       if (error.message.includes('QUOTA_EXCEEDED')) {
+        // This will now only happen if we try to save IZIN_SAKIT without isEmergency flag when quota is full
+        // But since we now always show modal, we can handle the "Emergency" flag inside the modal
         setEmergencyModalMember(member);
       } else {
         alert('Gagal memperbarui presensi.');
@@ -153,9 +161,14 @@ export function AttendanceModal({
                             <span>•</span>
                             <span>{member.department}</span>
                             {attendance?.isEmergencyIzin && (
-                              <span className="bg-red-100 text-red-600 px-1 rounded text-[10px] font-bold">DARURAT</span>
+                              <span className="bg-red-100 text-red-600 px-1 rounded text-[10px] font-bold uppercase tracking-wider">Darurat</span>
                             )}
                           </div>
+                          {attendance?.emergencyReason && (
+                            <p className="mt-1 text-[11px] text-indigo-600 italic font-medium bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 inline-block">
+                              Alasan: {attendance.emergencyReason}
+                            </p>
+                          )}
                         </div>
                       </div>
                       
@@ -174,7 +187,9 @@ export function AttendanceModal({
                         <option value="">-- Pilih Status --</option>
                         <option value="TEPAT_WAKTU">Tepat Waktu</option>
                         <option value="TERLAMBAT_SAH">Terlambat (Sah)</option>
-                        <option value="IZIN_SAKIT">Izin / Sakit</option>
+                        <option value="IZIN_SAKIT">
+                          Izin / Sakit {activity.attendees.filter(a => a.status === 'IZIN_SAKIT').length >= 7 && !attendance?.isEmergencyIzin ? '(Penuh)' : ''}
+                        </option>
                         <option value="TERLAMBAT_NON_SAKTI">Terlambat (Non-Sakti)</option>
                         <option value="PULANG_CEPAT">Pulang Cepat</option>
                         <option value="ALPHA">Alpha</option>
@@ -207,48 +222,60 @@ export function AttendanceModal({
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* Emergency Override Modal */}
+      {/* Reason for Leave Modal */}
       <Dialog.Root open={!!emergencyModalMember} onOpenChange={(open) => !open && setEmergencyModalMember(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-[60] p-6">
-            <Dialog.Title className="text-lg font-bold text-red-600 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              Kuota Izin Terpenuhi
+            <Dialog.Title className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-indigo-600" />
+              Alasan Izin / Sakit
             </Dialog.Title>
-            <Dialog.Description className="text-sm text-slate-600 mt-2">
-              Kuota izin (7) untuk <strong>{activity.name}</strong> sudah penuh. Untuk menambahkan izin lagi bagi <strong>{emergencyModalMember?.name}</strong>, Anda harus menggunakan status **Izin Darurat**.
-            </Dialog.Description>
             
             <div className="mt-4 space-y-4">
+              <p className="text-sm text-slate-600">
+                Memberikan izin untuk <strong>{emergencyModalMember?.name}</strong>. Silakan isi alasan di bawah:
+              </p>
+
               <div className="space-y-2">
-                <Label>Alasan Izin Darurat</Label>
+                <Label>Alasan Izin</Label>
                 <Input 
-                  placeholder="Contoh: Kecelakaan, Duka Cita, dll" 
+                  placeholder="Contoh: Sakit tipes, Acara Keluarga, dll" 
                   value={emergencyReason}
                   onChange={e => setEmergencyReason(e.target.value)}
+                  autoFocus
                 />
               </div>
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                Tindakan ini akan dicatat dalam log sistem sebagai penyimpangan kuota.
-              </div>
+
+              {activity.attendees.filter(a => a.status === 'IZIN_SAKIT').length >= 7 && (
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block mb-1 uppercase">Kuota Penuh!</span>
+                    Kuota izin (7) sudah penuh. Status ini akan dicatat sebagai <strong>Izin Darurat</strong>.
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setEmergencyModalMember(null)}>Batal</Button>
+              <Button variant="ghost" onClick={() => {
+                setEmergencyModalMember(null);
+                setEmergencyReason('');
+              }}>Batal</Button>
               <Button 
                 disabled={!emergencyReason}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
                 onClick={() => {
                   if (emergencyModalMember) {
-                    handleStatusChange(emergencyModalMember, 'IZIN_SAKIT', true, emergencyReason);
+                    const isQuotaFull = activity.attendees.filter(a => a.status === 'IZIN_SAKIT').length >= 7;
+                    handleStatusChange(emergencyModalMember, 'IZIN_SAKIT', isQuotaFull, emergencyReason);
                     setEmergencyModalMember(null);
                     setEmergencyReason('');
                   }
                 }}
               >
-                Simpan Sebagai Darurat
+                Simpan Presensi
               </Button>
             </div>
           </Dialog.Content>

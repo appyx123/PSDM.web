@@ -91,9 +91,9 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5">
-                  <div className={cn("w-1.5 h-1.5 rounded-full", member.status === 'active' ? "bg-green-500" : "bg-slate-400")} />
-                  <span className="text-xs font-medium text-slate-600">
-                    {member.status === 'active' ? 'Aktif' : 'Non-Aktif'}
+                  <div className={cn("w-1.5 h-1.5 rounded-full", member.status === 'AKTIF' ? "bg-green-500" : member.status === 'ALUMNI' ? "bg-indigo-400" : "bg-slate-400")} />
+                  <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+                    {member.status}
                   </span>
                 </div>
               </TableCell>

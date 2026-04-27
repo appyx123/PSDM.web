@@ -1,16 +1,20 @@
-'use client';
-
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MembersTable } from '@/components/members-table';
 import { AddMemberModal } from '@/components/add-member-modal';
 import { MemberDetailPanel } from '@/components/member-detail-panel';
 import { Member } from '@/app/page';
+import { Label } from '@/components/ui/label';
 import { 
   Plus, FileDown, Download, Table as TableIcon, 
-  Search, Users, UserPlus 
+  Search, Users, UserPlus, Upload, Filter, ArrowUpDown
 } from 'lucide-react';
+import { 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+} from '@/components/ui/select';
 import * as XLSX from 'xlsx';
+
+import { ImportMemberModal } from '@/components/import-member-modal';
 
 interface MembersViewProps {
   members: Member[];
@@ -18,7 +22,7 @@ interface MembersViewProps {
   onAddMember: (data: any) => void;
   onUpdateMember: (memberId: string, data: any) => void;
   onDeleteMember: (memberId: string) => void;
-  filteredMembers: Member[];
+  onRefresh: () => void;
 }
 
 export function MembersView({
@@ -27,12 +31,59 @@ export function MembersView({
   onAddMember,
   onUpdateMember,
   onDeleteMember,
-  filteredMembers,
+  onRefresh,
 }: MembersViewProps) {
   const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [selectedMemberDetail, setSelectedMemberDetail] = useState<Member | null>(null);
   const [detailPanelOpen, setDetailPanelOpen] = useState(false);
+
+  // Filter & Sort State
+  const [filterDept, setFilterDept] = useState<string>('ALL');
+  const [filterPos, setFilterPos] = useState<string>('ALL');
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<string>('name-asc');
+
+  const processedMembers = useMemo(() => {
+    let result = [...members];
+
+    // 1. Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(m => 
+        m.name.toLowerCase().includes(q) || 
+        m.prn.toLowerCase().includes(q)
+      );
+    }
+
+    // 2. Filters
+    if (filterDept !== 'ALL') {
+      result = result.filter(m => m.department === filterDept);
+    }
+    if (filterPos !== 'ALL') {
+      result = result.filter(m => m.position === filterPos);
+    }
+    if (filterStatus !== 'ALL') {
+      result = result.filter(m => m.status === filterStatus);
+    }
+
+    // 3. Sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc': return a.name.localeCompare(b.name);
+        case 'name-desc': return b.name.localeCompare(a.name);
+        case 'prn-asc': return a.prn.localeCompare(b.prn);
+        case 'prn-desc': return b.prn.localeCompare(a.prn);
+        case 'points-desc': return (b.points ?? 0) - (a.points ?? 0);
+        case 'points-asc': return (a.points ?? 0) - (b.points ?? 0);
+        case 'date-desc': return new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime();
+        default: return 0;
+      }
+    });
+
+    return result;
+  }, [members, searchQuery, filterDept, filterPos, filterStatus, sortBy]);
 
   const handleEditClick = (member: Member) => {
     setEditingMember(member);
@@ -45,12 +96,12 @@ export function MembersView({
   };
 
   const handleExportXLSX = () => {
-    const exportData = members.map(m => ({
+    const exportData = processedMembers.map(m => ({
       'Nama Lengkap': m.name,
       'PRN': m.prn,
       'Jabatan': m.position,
       'Departemen': m.department === 'Trisula' ? '-' : m.department,
-      'Status': m.status === 'active' ? 'Aktif' : 'Non-Aktif',
+      'Status': m.status === 'AKTIF' ? 'Aktif' : m.status === 'ALUMNI' ? 'Alumni' : 'Non-Aktif',
       'Total Poin': m.points ?? 100,
       'Jenis Kelamin': m.user?.gender || '-',
       'Asal Kota': m.user?.originCity || '-',
@@ -77,7 +128,7 @@ export function MembersView({
       'Prodi', 'Kontak', 'Instagram', 'Tanggal Gabung'
     ];
     
-    const rows = members.map(m => [
+    const rows = processedMembers.map(m => [
       m.name, m.prn, m.position, m.department === 'Trisula' ? '-' : m.department, m.status, m.points ?? 100,
       m.user?.gender || '-', m.user?.originCity || '-', m.user?.domicileCity || '-',
       m.user?.angkatan || '-', m.user?.nim || '-', m.user?.faculty || '-',
@@ -115,6 +166,14 @@ export function MembersView({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setImportOpen(true)}
+            className="border-green-200 text-green-700 hover:bg-green-50 shadow-sm"
+          >
+            <Upload className="w-4 h-4 mr-2" /> Import Pengurus
+          </Button>
           <div className="flex bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm mr-2">
             <Button 
               variant="ghost" 
@@ -146,6 +205,86 @@ export function MembersView({
         </div>
       </div>
 
+      {/* Filter & Sort Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-end">
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+            <Filter className="w-3 h-3" /> Departemen
+          </Label>
+          <Select value={filterDept} onValueChange={setFilterDept}>
+            <SelectTrigger className="w-[140px] h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua</SelectItem>
+              <SelectItem value="PSDM">PSDM</SelectItem>
+              <SelectItem value="Media">Media</SelectItem>
+              <SelectItem value="Penalaran">Penalaran</SelectItem>
+              <SelectItem value="Kompres">Kompres</SelectItem>
+              <SelectItem value="Ristek">Ristek</SelectItem>
+              <SelectItem value="Humas">Humas</SelectItem>
+              <SelectItem value="Trisula">Trisula</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+             Jabatan
+          </Label>
+          <Select value={filterPos} onValueChange={setFilterPos}>
+            <SelectTrigger className="w-[160px] h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua</SelectItem>
+              <SelectItem value="Ketua Umum">Ketua Umum</SelectItem>
+              <SelectItem value="Bendahara Umum">Bendahara Umum</SelectItem>
+              <SelectItem value="Sekretaris Umum">Sekretaris Umum</SelectItem>
+              <SelectItem value="Kepala Departemen">Kepala Departemen</SelectItem>
+              <SelectItem value="Staf Ahli">Staf Ahli</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+             Status
+          </Label>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[120px] h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua</SelectItem>
+              <SelectItem value="AKTIF">AKTIF</SelectItem>
+              <SelectItem value="ALUMNI">ALUMNI</SelectItem>
+              <SelectItem value="NONAKTIF">NON-AKTIF</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5 ml-auto">
+          <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+            <ArrowUpDown className="w-3 h-3" /> Urutkan Berdasarkan
+          </Label>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px] h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Nama (A-Z)</SelectItem>
+              <SelectItem value="name-desc">Nama (Z-A)</SelectItem>
+              <SelectItem value="prn-asc">PRN (Kecil ke Besar)</SelectItem>
+              <SelectItem value="prn-desc">PRN (Besar ke Kecil)</SelectItem>
+              <SelectItem value="points-desc">Poin Tertinggi</SelectItem>
+              <SelectItem value="points-asc">Poin Terendah</SelectItem>
+              <SelectItem value="date-desc">Terbaru Bergabung</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -154,7 +293,7 @@ export function MembersView({
         </div>
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold text-slate-400 uppercase">Aktif</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{members.filter(m => m.status === 'active').length}</p>
+          <p className="text-2xl font-bold text-green-600 mt-1">{members.filter(m => m.status === 'AKTIF').length}</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold text-slate-400 uppercase">Departemen</p>
@@ -170,9 +309,9 @@ export function MembersView({
 
       {/* Main Table Content */}
       <div className="space-y-4">
-        {filteredMembers.length > 0 ? (
+        {processedMembers.length > 0 ? (
           <MembersTable
-            members={filteredMembers}
+            members={processedMembers}
             onEdit={handleEditClick}
             onDelete={onDeleteMember}
             onView={handleViewDetail}
@@ -185,8 +324,17 @@ export function MembersView({
              <p className="text-slate-500 font-medium">
                {searchQuery
                  ? `Tidak ada pengurus yang cocok dengan "${searchQuery}"`
-                 : 'Daftar pengurus kosong.'}
+                 : 'Tidak ada data pengurus yang sesuai dengan filter.'}
              </p>
+             {(filterDept !== 'ALL' || filterPos !== 'ALL' || filterStatus !== 'ALL') && (
+               <Button 
+                variant="link" 
+                onClick={() => { setFilterDept('ALL'); setFilterPos('ALL'); setFilterStatus('ALL'); }}
+                className="text-indigo-600 mt-2"
+               >
+                 Reset Semua Filter
+               </Button>
+             )}
           </div>
         )}
       </div>
@@ -200,6 +348,12 @@ export function MembersView({
         onUpdate={onUpdateMember}
       />
       
+      <ImportMemberModal
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onSuccess={onRefresh}
+      />
+      
       <MemberDetailPanel
         member={selectedMemberDetail}
         open={detailPanelOpen}
@@ -208,3 +362,4 @@ export function MembersView({
     </div>
   );
 }
+

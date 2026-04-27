@@ -100,9 +100,9 @@ export function MemberDetailPanel({ member, open, onOpenChange }: MemberDetailPa
                   <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Status Keanggotaan</p>
                   <Badge className={cn(
                     "w-fit font-bold px-4 py-1", 
-                    member.status === 'active' ? 'bg-green-500' : 'bg-slate-400'
+                    member.status === 'AKTIF' ? 'bg-green-500' : member.status === 'ALUMNI' ? 'bg-indigo-400' : 'bg-slate-400'
                   )}>
-                    {member.status === 'active' ? 'AKTIF' : 'NON-AKTIF'}
+                    {member.status}
                   </Badge>
                 </div>
               </div>

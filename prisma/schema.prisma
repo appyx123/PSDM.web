@@ -17,7 +17,7 @@ model Member {
   department            String
   position              String             @default("Staff")
   basePoints            Int                @default(100)
-  status                String             @default("active")
+  status                String             @default("AKTIF")
   joinDate              String
   
   // EWS Treatment Info

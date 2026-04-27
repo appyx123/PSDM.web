@@ -14,7 +14,7 @@ interface DashboardViewProps {
 export function DashboardView({ members, searchQuery = '', filteredMembers = [] }: DashboardViewProps) {
   // Calculate metrics
   const totalMembers = members.length;
-  const activeMembers = members.filter((m) => m.status === 'active').length;
+  const activeMembers = members.filter((m) => m.status === 'AKTIF').length;
   const totalPoints = members.reduce((sum, m) => sum + (m.points ?? 0), 0);
   const avgPoints = totalMembers > 0 ? Math.round(totalPoints / totalMembers) : 0;
 

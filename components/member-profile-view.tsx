@@ -101,8 +101,8 @@ export function MemberProfileView({ member, activities, sessionName, sysSettings
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-500">Status</span>
-              <Badge variant="outline" className={member.status === 'active' ? 'text-green-700 border-green-200 bg-green-50' : 'text-slate-500'}>
-                {member.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+              <Badge variant="outline" className={member.status === 'AKTIF' ? 'text-green-700 border-green-200 bg-green-50' : member.status === 'ALUMNI' ? 'text-indigo-700 border-indigo-200 bg-indigo-50' : 'text-slate-500'}>
+                {member.status}
               </Badge>
             </div>
           </CardContent>

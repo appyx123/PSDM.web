@@ -36,6 +36,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: email ? 'Email atau password salah.' : 'PRN atau password salah.' }, { status: 401 });
     }
 
+    // Check Member status for PENGURUS
+    if (user.role === 'PENGURUS') {
+      const member = await prisma.member.findUnique({
+        where: { id: user.memberId || '' }
+      });
+      if (member && member.status !== 'AKTIF') {
+        return NextResponse.json({ error: 'Akun tidak aktif. Silakan hubungi admin.' }, { status: 403 });
+      }
+    }
+
     const token = await signToken({
       userId: user.id,
       role: user.role as 'ADMIN' | 'PENGURUS',

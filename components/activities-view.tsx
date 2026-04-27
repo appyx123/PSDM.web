@@ -25,13 +25,16 @@ interface ActivitiesViewProps {
 
 export function ActivitiesView({
   activities,
-  members,
+  members: allMembers,
   onAddActivity,
   onDeleteActivity,
   onUpdateAttendance,
 }: ActivitiesViewProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedActivityForAttendance, setSelectedActivityForAttendance] = useState<Activity | null>(null);
+
+  // Filter only active members for attendance and exports
+  const members = allMembers.filter(m => m.status === 'AKTIF');
 
   const handleExportActivityExcel = (activity: Activity) => {
     const exportData = members.map(member => {

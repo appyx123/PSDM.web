@@ -14,7 +14,7 @@ interface ReportsViewProps {
 export function ReportsView({ members = [] }: ReportsViewProps) {
   // Calculate report metrics
   const totalMembers = members.length;
-  const activeMembers = members.filter((m) => m.status === 'active').length;
+  const activeMembers = members.filter((m) => m.status === 'AKTIF').length;
   const inactiveMembers = totalMembers - activeMembers;
   const totalPoints = members.reduce((sum, m) => sum + (m.points ?? 0), 0);
   const avgPoints = totalMembers > 0 ? Math.round(totalPoints / totalMembers) : 0;
@@ -61,7 +61,7 @@ export function ReportsView({ members = [] }: ReportsViewProps) {
       m.prn,
       m.department,
       (m.points ?? 0).toString(),
-      m.status === 'active' ? 'Aktif' : 'Tidak Aktif',
+      m.status === 'AKTIF' ? 'Aktif' : m.status === 'ALUMNI' ? 'Alumni' : 'Non-Aktif',
       new Date(m.joinDate).toLocaleDateString('id-ID')
     ]);
 
@@ -81,7 +81,7 @@ export function ReportsView({ members = [] }: ReportsViewProps) {
       PRN: m.prn,
       Departemen: m.department,
       Poin: m.points ?? 0,
-      Status: m.status === 'active' ? 'Aktif' : 'Tidak Aktif',
+      Status: m.status === 'AKTIF' ? 'Aktif' : m.status === 'ALUMNI' ? 'Alumni' : 'Non-Aktif',
       'Tanggal Bergabung': new Date(m.joinDate).toLocaleDateString('id-ID')
     })));
     const workbook = XLSX.utils.book_new();
@@ -96,7 +96,7 @@ export function ReportsView({ members = [] }: ReportsViewProps) {
       PRN: m.prn,
       Departemen: m.department,
       Poin: m.points ?? 0,
-      Status: m.status === 'active' ? 'Aktif' : 'Tidak Aktif',
+      Status: m.status === 'AKTIF' ? 'Aktif' : m.status === 'ALUMNI' ? 'Alumni' : 'Non-Aktif',
       'Tanggal Bergabung': new Date(m.joinDate).toLocaleDateString('id-ID')
     })));
     const csvOutput = XLSX.utils.sheet_to_csv(worksheet);

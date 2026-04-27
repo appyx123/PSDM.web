@@ -60,7 +60,7 @@ export function AddMemberModal({
     prn: '',
     department: '',
     position: 'Staf Ahli',
-    status: 'active' as 'active' | 'inactive',
+    status: 'AKTIF' as 'AKTIF' | 'ALUMNI' | 'NONAKTIF',
   });
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export function AddMemberModal({
         prn: '',
         department: '',
         position: 'Staf Ahli',
-        status: 'active',
+        status: 'AKTIF',
       });
     }
   }, [editingMember, open]);
@@ -197,14 +197,15 @@ export function AddMemberModal({
             <Label>Status Keanggotaan</Label>
             <Select
               value={formData.status}
-              onValueChange={(v: 'active' | 'inactive') => setFormData({ ...formData, status: v })}
+              onValueChange={(v: 'AKTIF' | 'ALUMNI' | 'NONAKTIF') => setFormData({ ...formData, status: v })}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Aktif</SelectItem>
-                <SelectItem value="inactive">Non-Aktif</SelectItem>
+                <SelectItem value="AKTIF">🟢 Aktif</SelectItem>
+                <SelectItem value="ALUMNI">🎓 Alumni</SelectItem>
+                <SelectItem value="NONAKTIF">🔴 Non-Aktif</SelectItem>
               </SelectContent>
             </Select>
           </div>

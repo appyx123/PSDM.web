@@ -19,6 +19,7 @@ export type TreatmentPath = 'REDEMPTION' | 'FULL_ATTENDANCE';
 export interface TreatmentInfo {
   isActive: boolean;
   level?: string;
+  path?: TreatmentPath;
   phase?: string;
   startDate: string;
   startPoints: number;
@@ -34,7 +35,7 @@ export interface Member {
   position: string;
   basePoints: number;
   points?: number; // Derived
-  status: 'active' | 'inactive';
+  status: 'AKTIF' | 'ALUMNI' | 'NONAKTIF';
   joinDate: string;
   treatment?: TreatmentInfo;
   pointLogs?: any[];
@@ -223,7 +224,7 @@ export default function DashboardPage() {
     );
   }, [derivedMembers, searchQuery]);
 
-  const handleAddMember = async (data: { name: string; prn: string; department: string; status: 'active' | 'inactive'; basePoints?: number }) => {
+  const handleAddMember = async (data: { name: string; prn: string; department: string; status: 'AKTIF' | 'ALUMNI' | 'NONAKTIF'; position: string; basePoints?: number }) => {
     const res = await fetch('/api/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -244,7 +245,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleUpdateMember = async (memberId: string, data: { name: string; prn: string; department: string; status: 'active' | 'inactive'; basePoints?: number }) => {
+  const handleUpdateMember = async (memberId: string, data: { name: string; prn: string; department: string; status: 'AKTIF' | 'ALUMNI' | 'NONAKTIF'; position: string; basePoints?: number }) => {
     const res = await fetch(`/api/members/${memberId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -313,8 +314,9 @@ export default function DashboardPage() {
     } else {
       const err = await res.json();
       if (err.error === 'QUOTA_EXCEEDED') {
-        throw new Error(err.message);
+        throw new Error('QUOTA_EXCEEDED: ' + err.message);
       }
+      throw new Error(err.error || 'Terjadi kesalahan');
     }
   };
 
@@ -369,9 +371,8 @@ export default function DashboardPage() {
             searchQuery={searchQuery}
             onAddMember={handleAddMember}
             onUpdateMember={handleUpdateMember}
-            onAddPoints={handleAddPoints}
             onDeleteMember={handleDeleteMember}
-            filteredMembers={filteredMembers}
+            onRefresh={fetchData}
           />
         );
       case 'reports':
