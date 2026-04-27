@@ -68,7 +68,7 @@ export function AddPointsModal({
         <DialogHeader>
           <DialogTitle>Tambah Poin</DialogTitle>
           <DialogDescription>
-            {member && `Tambahkan poin untuk ${member.name}`}
+            Tambahkan poin manual untuk anggota terpilih sesuai dengan kegiatan yang dilakukan.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,6 +110,7 @@ export function AddPointsModal({
               type="number"
               placeholder="Masukkan jumlah poin"
               value={formData.points}
+              onFocus={(e) => e.target.select()}
               onChange={(e) => setFormData({ ...formData, points: e.target.value })}
               required
               min="1"

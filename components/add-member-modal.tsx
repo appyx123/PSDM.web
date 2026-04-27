@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,12 +24,29 @@ import { Member } from '@/app/page';
 interface AddMemberModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; prn: string; department: string; status: 'active' | 'inactive'; basePoints?: number }) => void;
-  editingMember?: Member | null;
-  onUpdate?: (memberId: string, data: { name: string; prn: string; department: string; status: 'active' | 'inactive'; basePoints?: number }) => void;
+  onSubmit: (data: any) => void;
+  editingMember: Member | null;
+  onUpdate: (id: string, data: any) => void;
 }
 
-const departments = ['PSDM', 'Acara', 'Humas', 'Logistik', 'Medkom'];
+const DEPARTMENTS = [
+  'PSDM',
+  'Media',
+  'Penalaran',
+  'Kompres',
+  'Ristek',
+  'Humas',
+];
+
+const POSITIONS = [
+  'Ketua Umum',
+  'Bendahara Umum',
+  'Sekretaris Umum',
+  'Kepala Departemen',
+  'Staf Ahli',
+];
+
+const TRISULA_POSITIONS = ['Ketua Umum', 'Bendahara Umum', 'Sekretaris Umum'];
 
 export function AddMemberModal({
   open,
@@ -37,18 +55,12 @@ export function AddMemberModal({
   editingMember,
   onUpdate,
 }: AddMemberModalProps) {
-  const [formData, setFormData] = useState<{
-    name: string;
-    prn: string;
-    department: string;
-    status: 'active' | 'inactive';
-    basePoints: number;
-  }>({
+  const [formData, setFormData] = useState({
     name: '',
     prn: '',
     department: '',
-    status: 'active',
-    basePoints: 0,
+    position: 'Staf Ahli',
+    status: 'active' as 'active' | 'inactive',
   });
 
   useEffect(() => {
@@ -56,47 +68,62 @@ export function AddMemberModal({
       setFormData({
         name: editingMember.name,
         prn: editingMember.prn,
-        department: editingMember.department,
+        department: editingMember.department === 'Trisula' ? '' : editingMember.department,
+        position: editingMember.position,
         status: editingMember.status,
-        basePoints: editingMember.basePoints ?? 0,
       });
     } else {
-      setFormData({ name: '', prn: '', department: '', status: 'active', basePoints: 0 });
+      setFormData({
+        name: '',
+        prn: '',
+        department: '',
+        position: 'Staf Ahli',
+        status: 'active',
+      });
     }
   }, [editingMember, open]);
 
+  const isTrisula = TRISULA_POSITIONS.includes(formData.position);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingMember && onUpdate) {
-      onUpdate(editingMember.id, formData);
-    } else {
-      onSubmit(formData);
+    
+    // Preparation data
+    const submissionData = {
+      ...formData,
+      // If Trisula, set department to "Trisula" or null in DB
+      department: isTrisula ? 'Trisula' : formData.department,
+    };
+
+    if (!isTrisula && !formData.department) {
+      alert("Departemen wajib dipilih untuk jabatan Kadep atau Staf Ahli.");
+      return;
     }
-    setFormData({ name: '', prn: '', department: '', status: 'active', basePoints: 0 });
+
+    if (editingMember) {
+      onUpdate(editingMember.id, submissionData);
+    } else {
+      onSubmit(submissionData);
+    }
     onOpenChange(false);
   };
 
-  const isEditing = !!editingMember;
-  const title = isEditing ? 'Edit Data Anggota' : 'Tambah Anggota Baru PERISAI';
-  const submitText = isEditing ? 'Update Data' : 'Simpan Anggota';
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>
+            {editingMember ? 'Edit Data Pengurus' : 'Tambah Pengurus Baru'}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Perbarui informasi anggota di bawah ini'
-              : 'Masukkan informasi anggota baru ke dalam sistem'}
+            {editingMember 
+              ? 'Perbarui informasi jabatan dan departemen pengurus.' 
+              : 'Akun user akan dibuat otomatis dengan password default SALAMINOVATOR.'}
           </DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              Nama Lengkap
-            </Label>
+            <Label htmlFor="name">Nama Lengkap</Label>
             <Input
               id="name"
               placeholder="Masukkan nama lengkap"
@@ -105,33 +132,59 @@ export function AddMemberModal({
               required
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="prn" className="text-sm font-medium">
-              PRN
-            </Label>
+            <Label htmlFor="prn">PRN (ID Anggota)</Label>
             <Input
               id="prn"
-              placeholder="Masukkan PRN"
+              placeholder="Contoh: PRN0252"
               value={formData.prn}
-              onChange={(e) => {
-                const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                setFormData({ ...formData, prn: value });
-              }}
+              onChange={(e) => setFormData({ ...formData, prn: e.target.value })}
               required
             />
           </div>
-
+          
           <div className="space-y-2">
-            <Label htmlFor="department" className="text-sm font-medium">
-              Departemen
-            </Label>
-            <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-              <SelectTrigger id="department">
-                <SelectValue placeholder="Pilih departemen" />
+            <Label>Jabatan</Label>
+            <Select
+              value={formData.position}
+              onValueChange={(v) => {
+                const newIsTrisula = TRISULA_POSITIONS.includes(v);
+                setFormData({ 
+                  ...formData, 
+                  position: v,
+                  department: newIsTrisula ? '' : formData.department 
+                });
+              }}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih Jabatan" />
               </SelectTrigger>
               <SelectContent>
-                {departments.map((dept) => (
+                {POSITIONS.map((pos) => (
+                  <SelectItem key={pos} value={pos}>
+                    {pos}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className={cn(isTrisula && "opacity-50")}>
+              Departemen {isTrisula && "(Tidak berlaku untuk Trisula)"}
+            </Label>
+            <Select
+              value={formData.department}
+              onValueChange={(v) => setFormData({ ...formData, department: v })}
+              disabled={isTrisula}
+              required={!isTrisula}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={isTrisula ? "Trisula" : "Pilih Departemen"} />
+              </SelectTrigger>
+              <SelectContent>
+                {DEPARTMENTS.map((dept) => (
                   <SelectItem key={dept} value={dept}>
                     {dept}
                   </SelectItem>
@@ -141,48 +194,33 @@ export function AddMemberModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status" className="text-sm font-medium">
-              Status Anggota
-            </Label>
-            <Select value={formData.status} onValueChange={(value: 'active' | 'inactive') => setFormData({ ...formData, status: value })}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Pilih status" />
+            <Label>Status Keanggotaan</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(v: 'active' | 'inactive') => setFormData({ ...formData, status: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Aktif</SelectItem>
-                <SelectItem value="inactive">Tidak Aktif</SelectItem>
+                <SelectItem value="inactive">Non-Aktif</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="basePoints" className="text-sm font-medium">
-              Poin Awal (Base Points)
-            </Label>
-            <Input
-              id="basePoints"
-              type="number"
-              placeholder="Masukkan poin awal"
-              value={formData.basePoints}
-              onChange={(e) => setFormData({ ...formData, basePoints: parseInt(e.target.value) || 0 })}
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-            >
-              Batal
+          
+          <DialogFooter className="pt-4">
+            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+              {editingMember ? 'Simpan Perubahan' : 'Tambah Pengurus'}
             </Button>
-            <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700">
-              {submitText}
-            </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+// Add cn utility if not present or just use standard template literal
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
 }

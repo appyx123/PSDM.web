@@ -6,9 +6,16 @@ import { cn } from '@/lib/utils';
 interface DashboardSidebarProps {
   activeItem?: string;
   onItemClick?: (itemId: string) => void;
+  appName?: string;
+  appLogo?: string;
 }
 
-export function DashboardSidebar({ activeItem = 'dashboard', onItemClick }: DashboardSidebarProps) {
+export function DashboardSidebar({ 
+  activeItem = 'dashboard', 
+  onItemClick,
+  appName = 'Admin',
+  appLogo
+}: DashboardSidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'members', label: 'Members', icon: Users },
@@ -22,9 +29,18 @@ export function DashboardSidebar({ activeItem = 'dashboard', onItemClick }: Dash
   return (
     <aside className="w-64 bg-indigo-900 text-white flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-indigo-800">
-        <h1 className="text-2xl font-bold">Admin</h1>
-        <p className="text-sm text-indigo-200">Management System</p>
+      <div className="p-6 border-b border-indigo-800 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-indigo-700 flex items-center justify-center overflow-hidden border border-indigo-600 flex-shrink-0">
+          {appLogo ? (
+            <img src={appLogo} alt="Logo" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white font-bold">{appName[0]}</span>
+          )}
+        </div>
+        <div className="overflow-hidden">
+          <h1 className="text-lg font-bold truncate leading-tight">{appName}</h1>
+          <p className="text-[10px] text-indigo-300 uppercase tracking-wider font-semibold mt-0.5">Management System</p>
+        </div>
       </div>
 
       {/* Menu Items */}

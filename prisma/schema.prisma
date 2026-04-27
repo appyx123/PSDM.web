@@ -15,21 +15,34 @@ model Member {
   name                  String
   prn                   String             @unique
   department            String
-  basePoints            Int                @default(0)
+  position              String             @default("Staff")
+  basePoints            Int                @default(100)
   status                String             @default("active")
   joinDate              String
   
   // EWS Treatment Info
   treatmentActive       Boolean            @default(false)
+  treatmentLevel        String?            // "SP1", "SP2"
+  treatmentPhase        String?            // "REDEMPTION", "FALLBACK_ATTENDANCE"
   treatmentStartDate    String?
   treatmentStartPoints  Int?
   treatmentTargetPoints Int?
   treatmentDurationDays Int?
-  treatmentPath         String?
 
   attendances           AttendanceRecord[]
   pointLogs             PointLog[]
+  spLogs                SPLog[]
   user                  User?
+}
+
+model SPLog {
+  id        String   @id @default(cuid())
+  memberId  String
+  level     String   // SP1, SP2, SP3
+  reason    String
+  notes     String?
+  issuedAt  DateTime @default(now())
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -58,6 +71,24 @@ model User {
 
   memberId  String?  @unique
   member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  
+  audits    SettingsAudit[]
+}
+
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model SettingsAudit {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  key       String
+  oldValue  String?
+  newValue  String
+  changedAt DateTime @default(now())
 }
 
 model PointLog {
@@ -86,6 +117,8 @@ model AttendanceRecord {
   memberId   String
   activityId String
   status     String
+  isEmergencyIzin Boolean @default(false)
+  emergencyReason String?
   
   member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
@@ -94,9 +127,10 @@ model AttendanceRecord {
 }
 
 model PointCategory {
-  id      String   @id @default(cuid())
-  type    String   // "REWARD" or "PUNISHMENT"
-  label   String   // The display name
-  value   String   // The unique value name
-  points  Int      // The default points value
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // "REWARD" or "PUNISHMENT"
+  points    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -37,6 +37,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         name: data.name,
         prn: data.prn,
         department: data.department,
+        position: data.position,
         basePoints: data.basePoints,
         status: data.status,
         ...treatmentData

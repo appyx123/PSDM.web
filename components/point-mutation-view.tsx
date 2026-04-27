@@ -17,13 +17,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Member } from '@/app/page';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 
 export interface PointCategory {
   id: string;
-  type: string;
-  label: string;
-  value: string;
+  name: string;
+  type: 'REWARD' | 'PUNISHMENT';
   points: number;
 }
 
@@ -53,14 +52,15 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
   const [isCatLoading, setIsCatLoading] = useState(true);
 
   // Form State
-  const [activeTab, setActiveTab] = useState<'PUNISHMENT' | 'REWARD'>('PUNISHMENT');
   const [selectedMember, setSelectedMember] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(''); // ID of category or 'OTHER'
+  const [customCategoryName, setCustomCategoryName] = useState('');
   const [points, setPoints] = useState<number>(0);
+  const [mutationType, setMutationType] = useState<'REWARD' | 'PUNISHMENT'>('REWARD');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const activeOptions = categories.filter(c => c.type === activeTab);
+
 
   const fetchPointLogs = async () => {
     setIsLoading(true);
@@ -80,7 +80,7 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
   const fetchCategories = async () => {
     setIsCatLoading(true);
     try {
-      const res = await fetch('/api/point-categories');
+      const res = await fetch('/api/admin/point-categories');
       if (res.ok) setCategories(await res.json());
     } finally {
       setIsCatLoading(false);
@@ -94,57 +94,53 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
 
   const handleCategoryChange = (val: string) => {
     setSelectedCategory(val);
-    const option = activeOptions.find((opt) => opt.id === val);
+    if (val === 'OTHER') {
+      setPoints(0);
+      return;
+    }
+    const option = categories.find((opt) => opt.id === val);
     if (option) {
       setPoints(option.points);
+      setMutationType(option.type);
     }
-  };
-
-  const handleTabChange = (val: string) => {
-    const tab = val as 'PUNISHMENT' | 'REWARD';
-    setActiveTab(tab);
-    setSelectedCategory('');
-    setPoints(0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMember || !selectedCategory) {
-      alert("Harap pilih Anggota dan Kategori SOP.");
+      alert("Harap pilih Anggota dan Kategori.");
+      return;
+    }
+
+    if (selectedCategory === 'OTHER' && !customCategoryName) {
+      alert("Harap isi nama kategori lainnya.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Resolve the category label from its id
-      const categoryObj = activeOptions.find(c => c.id === selectedCategory);
-      const categoryLabel = categoryObj?.label || selectedCategory;
-
-      // Enforce correct sign: PUNISHMENT must always be negative, REWARD always positive
-      const finalPoints = activeTab === 'PUNISHMENT'
-        ? -Math.abs(points)
-        : Math.abs(points);
+      const categoryObj = categories.find(c => c.id === selectedCategory);
+      const categoryLabel = categoryObj ? categoryObj.name : customCategoryName;
+      const type = categoryObj ? categoryObj.type : mutationType;
 
       const res = await fetch('/api/point-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           memberId: selectedMember,
-          type: activeTab,
+          type: type,
           category: categoryLabel,
-          points: finalPoints,
+          points: points,
           description: description || '-',
         }),
       });
 
       if (res.ok) {
-        // Reset form
         setSelectedMember('');
         setSelectedCategory('');
+        setCustomCategoryName('');
         setPoints(0);
         setDescription('');
-        
-        // Refresh data
         fetchPointLogs();
         onRefresh();
       } else {
@@ -190,28 +186,18 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form Section */}
         <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mutasi Poin Manual</CardTitle>
-              <CardDescription>Pilih anggota dan kategori evaluasi.</CardDescription>
+          <Card className="border-indigo-100 shadow-md">
+            <CardHeader className="bg-indigo-50/30">
+              <CardTitle>Eksekusi Penilaian</CardTitle>
+              <CardDescription>Pilih anggota dan kategori penilaian standar.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="PUNISHMENT" className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
-                    🔴 Punishment
-                  </TabsTrigger>
-                  <TabsTrigger value="REWARD" className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
-                    🟢 Reward
-                  </TabsTrigger>
-                </TabsList>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <CardContent className="pt-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label>Pilih Anggota</Label>
+                    <Label className="text-slate-700 font-semibold">1. Pilih Anggota</Label>
                     <Select value={selectedMember} onValueChange={setSelectedMember}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Cari Anggota..." />
+                      <SelectTrigger className="border-slate-300">
+                        <SelectValue placeholder="Pilih pengurus..." />
                       </SelectTrigger>
                       <SelectContent>
                         {members.map(m => (
@@ -224,68 +210,106 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Kategori SOP</Label>
+                    <Label className="text-slate-700 font-semibold">2. Kategori Penilaian</Label>
                     <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                      <SelectTrigger>
+                      <SelectTrigger className="border-slate-300">
                         <SelectValue placeholder="Pilih Kategori..." />
                       </SelectTrigger>
                       <SelectContent>
                         {isCatLoading ? (
                           <SelectItem value="loading" disabled>Memuat kategori...</SelectItem>
-                        ) : activeOptions.length === 0 ? (
-                          <SelectItem value="empty" disabled>Belum ada kategori. Tambah di Settings.</SelectItem>
-                        ) : activeOptions.map(opt => (
-                          <SelectItem key={opt.id} value={opt.id}>
-                            {opt.label} ({opt.points > 0 ? `+${opt.points}` : opt.points})
-                          </SelectItem>
-                        ))}
+                        ) : (
+                          <>
+                            {categories.map(opt => (
+                              <SelectItem key={opt.id} value={opt.id}>
+                                <div className="flex items-center gap-2">
+                                  <span>{opt.type === 'REWARD' ? '🟢' : '🔴'}</span>
+                                  <span>{opt.name}</span>
+                                  <span className="text-[10px] font-bold text-slate-400">
+                                    ({opt.points > 0 ? `+${opt.points}` : opt.points})
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="OTHER" className="font-bold text-indigo-600 border-t">✨ Lainnya (Input Bebas)</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Nilai Poin</Label>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold w-6 ${activeTab === 'PUNISHMENT' ? 'text-red-600' : 'text-green-600'}`}>
-                        {activeTab === 'PUNISHMENT' ? '−' : '+'}
-                      </span>
-                      <Input 
-                        type="number" 
-                        min={0}
-                        value={Math.abs(points)} 
-                        onChange={(e) => {
-                          const abs = parseInt(e.target.value) || 0;
-                          setPoints(activeTab === 'PUNISHMENT' ? -abs : abs);
-                        }} 
-                        className="flex-1"
-                      />
+                  {selectedCategory === 'OTHER' && (
+                    <div className="space-y-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold text-indigo-700 uppercase">Nama Kategori Kustom</Label>
+                        <Input 
+                          placeholder="Contoh: Panitia Terbaik Bulan Ini" 
+                          value={customCategoryName}
+                          onChange={e => setCustomCategoryName(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-indigo-700 uppercase">Jenis</Label>
+                          <Select value={mutationType} onValueChange={(v: any) => setMutationType(v)}>
+                            <SelectTrigger className="h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="REWARD">🟢 Reward</SelectItem>
+                              <SelectItem value="PUNISHMENT">🔴 Punishment</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-indigo-700 uppercase">Poin</Label>
+                          <Input 
+                            type="number" 
+                            className="h-9"
+                            placeholder="0"
+                            value={points || ''}
+                            onFocus={(e) => e.target.select()}
+                            onChange={e => setPoints(e.target.value === '' ? 0 : parseInt(e.target.value))}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <p className={`text-xs font-medium ${activeTab === 'PUNISHMENT' ? 'text-red-500' : 'text-green-600'}`}>
-                      {activeTab === 'PUNISHMENT'
-                        ? `Akan mengurangi poin sebesar ${Math.abs(points)} poin.`
-                        : `Akan menambah poin sebesar ${Math.abs(points)} poin.`}
-                    </p>
-                  </div>
+                  )}
+
+                  {selectedCategory && selectedCategory !== 'OTHER' && (
+                    <div className={`p-4 rounded-xl border flex items-center justify-between ${
+                      mutationType === 'REWARD' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                    }`}>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Poin Otomatis</p>
+                        <p className={`text-2xl font-black ${mutationType === 'REWARD' ? 'text-green-700' : 'text-red-700'}`}>
+                          {points > 0 ? `+${points}` : points}
+                        </p>
+                      </div>
+                      <Badge className={mutationType === 'REWARD' ? 'bg-green-600' : 'bg-red-600'}>
+                        {mutationType}
+                      </Badge>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
-                    <Label>Catatan (Opsional)</Label>
+                    <Label className="text-slate-700 font-semibold">3. Catatan Tambahan (Opsional)</Label>
                     <Textarea 
-                      placeholder="Tambahkan keterangan spesifik..." 
+                      placeholder="Detail alasan atau keterangan tambahan..." 
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="resize-none"
+                      className="resize-none border-slate-300"
                     />
                   </div>
 
                   <Button 
                     type="submit" 
-                    className={`w-full text-white ${activeTab === 'PUNISHMENT' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                    className="w-full h-12 text-white bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100 shadow-lg font-bold text-lg"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Menyimpan...' : 'Eksekusi Mutasi Poin'}
+                    {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan Penilaian'}
                   </Button>
                 </form>
-              </Tabs>
             </CardContent>
           </Card>
         </div>

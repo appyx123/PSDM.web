@@ -9,7 +9,7 @@
     "lint": "eslint ."
   },
   "prisma": {
-    "seed": "node prisma/seed.ts --require tsx"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -1,0 +1,26 @@
+export const PURE_MATRIX = {
+  EKSTERNAL: {
+    TEPAT_WAKTU: 5,
+    TERLAMBAT_SAH: 2,
+    IZIN_SAKIT: 0,
+    TERLAMBAT_NON_SAKTI: -2,
+    PULANG_CEPAT: -3,
+    ALPHA: -7
+  },
+  INTERNAL: {
+    TEPAT_WAKTU: 3,
+    TERLAMBAT_SAH: 1,
+    IZIN_SAKIT: 0,
+    TERLAMBAT_NON_SAKTI: -1,
+    PULANG_CEPAT: -2,
+    ALPHA: -5
+  },
+  KEPANITIAAN: {
+    TEPAT_WAKTU: 2,
+    TERLAMBAT_SAH: 1,
+    IZIN_SAKIT: 0,
+    TERLAMBAT_NON_SAKTI: -1,
+    PULANG_CEPAT: -2,
+    ALPHA: -3
+  }
+};

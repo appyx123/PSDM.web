@@ -9,9 +9,14 @@ interface MemberProfileViewProps {
   member: Member;
   activities: Activity[];
   sessionName: string;
+  sysSettings?: any;
 }
 
-export function MemberProfileView({ member, activities, sessionName }: MemberProfileViewProps) {
+export function MemberProfileView({ member, activities, sessionName, sysSettings }: MemberProfileViewProps) {
+  const targetPoints = parseInt(sysSettings?.TARGET_POINTS || '100');
+  const thresholdBaik = parseInt(sysSettings?.THRESHOLD_BAIK || '80');
+  const thresholdPerhatian = parseInt(sysSettings?.THRESHOLD_PERHATIAN || '50');
+
   const attendedActivities = useMemo(() => {
     return activities
       .filter(a => a.attendees.some(att => att.memberId === member.id))
@@ -22,13 +27,13 @@ export function MemberProfileView({ member, activities, sessionName }: MemberPro
   const activityPoints = (member.points || 0) - member.basePoints - manualPoints;
   const totalPoints = member.points || 0;
 
-  const statusColor = totalPoints >= 50
+  const statusColor = totalPoints >= thresholdBaik
     ? 'bg-green-100 text-green-800 border-green-200'
-    : totalPoints >= 20
+    : totalPoints >= thresholdPerhatian
     ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
     : 'bg-red-100 text-red-800 border-red-200';
 
-  const statusLabel = totalPoints >= 50 ? 'Baik' : totalPoints >= 20 ? 'Perhatian' : 'Kritis';
+  const statusLabel = totalPoints >= thresholdBaik ? 'Baik' : totalPoints >= thresholdPerhatian ? 'Perhatian' : 'Kritis';
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -116,11 +121,11 @@ export function MemberProfileView({ member, activities, sessionName }: MemberPro
             </Badge>
             <div className="w-full bg-slate-100 rounded-full h-2 mt-2">
               <div
-                className={`h-2 rounded-full transition-all ${totalPoints >= 50 ? 'bg-green-500' : totalPoints >= 20 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                style={{ width: `${Math.min((totalPoints / 100) * 100, 100)}%` }}
+                className={`h-2 rounded-full transition-all ${totalPoints >= thresholdBaik ? 'bg-green-500' : totalPoints >= thresholdPerhatian ? 'bg-yellow-500' : 'bg-red-500'}`}
+                style={{ width: `${Math.min((totalPoints / targetPoints) * 100, 100)}%` }}
               />
             </div>
-            <p className="text-xs text-slate-400">Target: 100 poin</p>
+            <p className="text-xs text-slate-400">Target: {targetPoints} poin</p>
           </CardContent>
         </Card>
       </div>

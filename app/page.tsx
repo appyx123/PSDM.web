@@ -18,11 +18,12 @@ export type TreatmentPath = 'REDEMPTION' | 'FULL_ATTENDANCE';
 
 export interface TreatmentInfo {
   isActive: boolean;
+  level?: string;
+  phase?: string;
   startDate: string;
   startPoints: number;
   targetPoints: number;
   durationDays: number;
-  path: TreatmentPath;
 }
 
 export interface Member {
@@ -30,12 +31,15 @@ export interface Member {
   name: string;
   prn: string;
   department: string;
+  position: string;
   basePoints: number;
   points?: number; // Derived
   status: 'active' | 'inactive';
   joinDate: string;
   treatment?: TreatmentInfo;
   pointLogs?: any[];
+  user?: any;
+  attendances?: any[];
 }
 
 export type ActivityScope = 'EKSTERNAL' | 'INTERNAL' | 'KEPANITIAAN';
@@ -98,12 +102,29 @@ interface SessionUser {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi'>('dashboard');
+  
+  // Sync tab with URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi'].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, []);
+
+  // Update URL when tab changes
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', activeTab);
+    window.history.replaceState({}, '', url.toString());
+  }, [activeTab]);
   const [members, setMembers] = useState<Member[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<SessionUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [sysSettings, setSysSettings] = useState<any>(null);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -112,24 +133,18 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const [membersRes, activitiesRes] = await Promise.all([
+      const [membersRes, activitiesRes, settingsRes] = await Promise.all([
         fetch('/api/members'),
-        fetch('/api/activities')
+        fetch('/api/activities'),
+        fetch('/api/admin/settings')
       ]);
       const membersData = await membersRes.json();
       const activitiesData = await activitiesRes.json();
+      const settingsData = await settingsRes.json();
       
-      if (Array.isArray(membersData)) {
-        setMembers(membersData);
-      } else {
-        console.error("Members API returned error:", membersData);
-      }
-      
-      if (Array.isArray(activitiesData)) {
-        setActivities(activitiesData);
-      } else {
-        console.error("Activities API returned error:", activitiesData);
-      }
+      if (Array.isArray(membersData)) setMembers(membersData);
+      if (Array.isArray(activitiesData)) setActivities(activitiesData);
+      if (settingsData && !settingsData.error) setSysSettings(settingsData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -160,6 +175,10 @@ export default function DashboardPage() {
 
   // Derive member points dynamically based on activities
   const derivedMembers = useMemo(() => {
+    const rules = sysSettings?.POINT_RULES ? JSON.parse(sysSettings.POINT_RULES) : PURE_MATRIX;
+    const alphaMultiplier = parseFloat(sysSettings?.ALPHA_MULTIPLIER || '2');
+    const maxAlphaPenalty = parseFloat(sysSettings?.ALPHA_MAX_PENALTY || '50');
+
     return members.map(member => {
       const sortedActivities = [...activities].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       
@@ -169,11 +188,13 @@ export default function DashboardPage() {
       for (const activity of sortedActivities) {
         const attendance = activity.attendees.find(att => att.memberId === member.id);
         if (attendance) {
-          const baseChange = PURE_MATRIX[activity.scope][attendance.status];
+          const baseChange = rules[activity.scope]?.[attendance.status] ?? 0;
           
           if (attendance.status === 'ALPHA') {
-            const multiplier = Math.pow(2, consecutiveAlphas);
-            activityPoints += (baseChange * multiplier);
+            const rawPenalty = baseChange * Math.pow(alphaMultiplier, consecutiveAlphas);
+            // Apply Max Alpha Penalty limit (capped at negative value of maxAlphaPenalty)
+            const finalPenalty = Math.max(rawPenalty, -Math.abs(maxAlphaPenalty)); 
+            activityPoints += finalPenalty;
             consecutiveAlphas++;
           } else {
             activityPoints += baseChange;
@@ -188,8 +209,8 @@ export default function DashboardPage() {
         ...member,
         points: member.basePoints + activityPoints + manualPoints
       };
-    }) as Member[]; // Safe cast as points is guaranteed to be populated
-  }, [members, activities]);
+    }) as Member[];
+  }, [members, activities, sysSettings]);
 
   // Filter members based on search query
   const filteredMembers = useMemo(() => {
@@ -213,7 +234,7 @@ export default function DashboardPage() {
       const newMember: Member = {
         id,
         ...data,
-        basePoints: data.basePoints || 0,
+        basePoints: data.basePoints ?? 100,
         joinDate: new Date().toISOString().split('T')[0],
       };
       setMembers([...members, newMember]);
@@ -274,26 +295,26 @@ export default function DashboardPage() {
     }
   };
 
-  const handleUpdateAttendance = async (activityId: string, memberId: string, status: AttendanceStatus | null) => {
+  const handleUpdateAttendance = async (
+    activityId: string, 
+    memberId: string, 
+    status: AttendanceStatus | null,
+    isEmergency?: boolean,
+    emergencyReason?: string
+  ) => {
     const res = await fetch(`/api/activities/${activityId}/attendance`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ memberId, status })
+      body: JSON.stringify({ memberId, status, isEmergency, emergencyReason })
     });
     
     if (res.ok) {
-      setActivities(currentActivities => 
-        currentActivities.map(a => {
-          if (a.id === activityId) {
-            const filteredAttendees = a.attendees.filter(att => att.memberId !== memberId);
-            if (status !== null) {
-              return { ...a, attendees: [...filteredAttendees, { memberId, status }] };
-            }
-            return { ...a, attendees: filteredAttendees };
-          }
-          return a;
-        })
-      );
+      await fetchData(); 
+    } else {
+      const err = await res.json();
+      if (err.error === 'QUOTA_EXCEEDED') {
+        throw new Error(err.message);
+      }
     }
   };
 
@@ -372,6 +393,7 @@ export default function DashboardPage() {
           <GovernanceView
             members={derivedMembers}
             onStartTreatment={handleStartTreatment}
+            sysSettings={sysSettings}
           />
         );
       case 'evaluasi':
@@ -408,10 +430,16 @@ export default function DashboardPage() {
           <header className="bg-white border-b border-slate-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">P</span>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
+                  {sysSettings?.APP_LOGO ? (
+                    <img src={sysSettings.APP_LOGO} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white text-xs font-bold">{sysSettings?.APP_NAME?.[0] || 'P'}</span>
+                  )}
                 </div>
-                <span className="text-sm font-semibold text-slate-700">PSDM System</span>
+                <span className="text-sm font-semibold text-slate-700">{sysSettings?.APP_NAME || 'PSDM System'}</span>
+              </div>
               </div>
               <div className="flex items-center gap-3">
                 <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -431,7 +459,12 @@ export default function DashboardPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center h-64 text-slate-500">Memuat profil...</div>
               ) : myMember ? (
-                <MemberProfileView member={myMember} activities={activities} sessionName={session.name} />
+                <MemberProfileView 
+                  member={myMember} 
+                  activities={activities} 
+                  sessionName={session.name} 
+                  sysSettings={sysSettings}
+                />
               ) : (
                 <div className="text-center py-16 text-slate-500">
                   <p className="text-lg font-medium">Profil tidak ditemukan.</p>
@@ -448,7 +481,12 @@ export default function DashboardPage() {
   // Admin full dashboard
   return (
     <div className="flex h-screen bg-slate-50">
-      <DashboardSidebar activeItem={activeTab} onItemClick={handleTabChange} />
+      <DashboardSidebar 
+        activeItem={activeTab} 
+        onItemClick={handleTabChange} 
+        appName={sysSettings?.APP_NAME}
+        appLogo={sysSettings?.APP_LOGO}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader
           userName={session?.name || 'Admin'}

@@ -14,7 +14,13 @@ interface ActivitiesViewProps {
   members: Member[];
   onAddActivity: (data: { name: string; date: string; description: string; scope: ActivityScope }) => void;
   onDeleteActivity: (activityId: string) => void;
-  onUpdateAttendance: (activityId: string, memberId: string, status: AttendanceStatus | null) => void;
+  onUpdateAttendance: (
+    activityId: string, 
+    memberId: string, 
+    status: AttendanceStatus | null,
+    isEmergency?: boolean,
+    emergencyReason?: string
+  ) => Promise<void>;
 }
 
 export function ActivitiesView({
@@ -197,15 +203,28 @@ export function ActivitiesView({
         onClose={() => setSelectedActivityForAttendance(null)}
         activity={selectedActivityForAttendance}
         members={members}
-        onUpdateAttendance={(activityId, memberId, status) => {
-          onUpdateAttendance(activityId, memberId, status);
+        onUpdateAttendance={async (activityId, memberId, status, isEmergency, emergencyReason) => {
+          await onUpdateAttendance(activityId, memberId, status, isEmergency, emergencyReason);
           
           if (selectedActivityForAttendance && selectedActivityForAttendance.id === activityId) {
             const currentAttendees = selectedActivityForAttendance.attendees.filter(a => a.memberId !== memberId);
-            setSelectedActivityForAttendance({
-              ...selectedActivityForAttendance,
-              attendees: status ? [...currentAttendees, { memberId, status }] : currentAttendees
-            });
+            if (status) {
+              const newAttendee = { 
+                memberId, 
+                status, 
+                isEmergencyIzin: isEmergency, 
+                emergencyReason 
+              };
+              setSelectedActivityForAttendance({
+                ...selectedActivityForAttendance,
+                attendees: [...currentAttendees, newAttendee as any]
+              });
+            } else {
+              setSelectedActivityForAttendance({
+                ...selectedActivityForAttendance,
+                attendees: currentAttendees
+              });
+            }
           }
         }}
       />
