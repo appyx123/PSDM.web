@@ -13,12 +13,12 @@ next.user-config.*
 .env*.local
 
 # Database files - contains real data, exclude from repo
-prisma/dev.db
-prisma/dev.db-journal
-prisma/*.db
-prisma/*.db-journal
+# prisma/dev.db
+# prisma/dev.db-journal
+# prisma/*.db
+# prisma/*.db-journal
 # *.db
-*.db-journal
+# *.db-journal
 
 # Next.js build output
 .next/
