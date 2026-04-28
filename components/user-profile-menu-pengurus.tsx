@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
+import { getImageUrl } from '@/lib/utils';
 
 interface UserProfileMenuPengurusProps {
   userName?: string;
@@ -39,7 +40,7 @@ export function UserProfileMenuPengurus({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
           <Avatar className="h-9 w-9">
-            {userImage && <AvatarImage src={userImage} alt={userName} className="object-cover" />}
+            {userImage && <AvatarImage src={getImageUrl(userImage) || ''} alt={userName} className="object-cover" />}
             <AvatarFallback className="bg-indigo-600 text-white font-semibold">
               {initials}
             </AvatarFallback>

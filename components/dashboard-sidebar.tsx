@@ -1,7 +1,7 @@
 'use client';
 
 import { Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 
 interface DashboardSidebarProps {
   activeItem?: string;
@@ -32,7 +32,7 @@ export function DashboardSidebar({
       <div className="p-6 border-b border-indigo-800 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-indigo-700 flex items-center justify-center overflow-hidden border border-indigo-600 flex-shrink-0">
           {appLogo ? (
-            <img src={appLogo} alt="Logo" className="w-full h-full object-cover" />
+            <img src={getImageUrl(appLogo) || ''} alt="Logo" className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-bold">{appName[0]}</span>
           )}

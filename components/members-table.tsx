@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Member } from '@/app/page';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 
 interface MembersTableProps {
   members: Member[];
@@ -55,7 +55,7 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
               <TableCell className="py-4">
                 <div className="flex items-center gap-3">
                   {member.user?.image ? (
-                    <img src={member.user.image} alt={member.name} className="w-9 h-9 rounded-full object-cover border border-slate-200" />
+                    <img src={getImageUrl(member.user.image) || ''} alt={member.name} className="w-9 h-9 rounded-full object-cover border border-slate-200" />
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 border border-indigo-50">
                       {getInitials(member.name)}

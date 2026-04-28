@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const path = join(uploadDir, filename);
     await writeFile(path, buffer);
 
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    return NextResponse.json({ url: filename });
   } catch (error) {
     console.error('Logo upload error:', error);
     return NextResponse.json({ error: 'Failed to upload logo' }, { status: 500 });

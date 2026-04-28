@@ -92,19 +92,21 @@ export async function POST(request: Request) {
           const buffer = Buffer.from(base64Data, 'base64');
           
           const fileName = `avatar-${session.userId}-${Date.now()}.${type === 'jpeg' ? 'jpg' : type}`;
-          const relativePath = `/uploads/${fileName}`;
           const absolutePath = path.join(process.cwd(), 'public', 'uploads', fileName);
 
           // Save file to public/uploads
           await fs.writeFile(absolutePath, buffer);
           
-          imagePath = relativePath;
+          // Only store the filename in DB
+          imagePath = fileName;
 
-          // Optional: Clean up old image if exists and it's an /uploads/ path
+          // Cleanup old image if exists
           const oldUser = await prisma.user.findUnique({ where: { id: session.userId }, select: { image: true } });
-          if (oldUser?.image && oldUser.image.startsWith('/uploads/')) {
+          if (oldUser?.image) {
             try {
-              const oldAbsolutePath = path.join(process.cwd(), 'public', oldUser.image);
+              // Extract filename if it was stored with /uploads/ prefix
+              const oldFileName = oldUser.image.replace('/uploads/', '');
+              const oldAbsolutePath = path.join(process.cwd(), 'public', 'uploads', oldFileName);
               await fs.unlink(oldAbsolutePath);
             } catch (err) {
               console.warn('Could not delete old image:', err);

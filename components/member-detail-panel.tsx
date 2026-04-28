@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Member } from '@/app/page';
-import { cn } from '@/lib/utils';
+import { cn, getImageUrl } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MemberDetailPanelProps {
@@ -36,7 +36,7 @@ export function MemberDetailPanel({ member, open, onOpenChange }: MemberDetailPa
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-5">
               {user.image ? (
-                <img src={user.image} alt={member.name} className="w-20 h-20 rounded-2xl object-cover border-4 border-indigo-50 shadow-sm" />
+                <img src={getImageUrl(user.image) || ''} alt={member.name} className="w-20 h-20 rounded-2xl object-cover border-4 border-indigo-50 shadow-sm" />
               ) : (
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-2xl font-bold text-white shadow-md">
                   {initials}

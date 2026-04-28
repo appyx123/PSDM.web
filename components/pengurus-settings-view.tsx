@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { facultiesData, faculties, indonesianCities, genders } from '@/lib/profile-data';
+import { getImageUrl } from '@/lib/utils';
 
 interface ProfileFormData {
   fullName: string;
@@ -264,7 +265,7 @@ export function PengurusSettingsView() {
                   <div className="flex items-center gap-5">
                     <div className="relative flex-shrink-0">
                       {profileData.avatarPreview ? (
-                        <img src={profileData.avatarPreview} alt="Avatar" className="w-20 h-20 rounded-full object-cover ring-2 ring-indigo-200" />
+                        <img src={getImageUrl(profileData.avatarPreview) || ''} alt="Avatar" className="w-20 h-20 rounded-full object-cover ring-2 ring-indigo-200" />
                       ) : (
                         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-indigo-200">
                           {getInitials(profileData.fullName)}

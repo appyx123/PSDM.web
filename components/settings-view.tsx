@@ -19,6 +19,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { DEFAULT_SETTINGS, SettingKey } from '@/lib/defaultSettings';
+import { getImageUrl } from '@/lib/utils';
 
 export interface PointCategory {
   id: string;
@@ -699,7 +700,7 @@ export function SettingsView() {
                 <div className="flex flex-col md:flex-row items-center gap-6 p-4 border rounded-xl bg-slate-50/50">
                   <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center overflow-hidden shrink-0">
                     {settings.APP_LOGO ? (
-                      <img src={settings.APP_LOGO} alt="Logo Preview" className="w-full h-full object-contain p-2" />
+                      <img src={getImageUrl(settings.APP_LOGO) || ''} alt="Logo Preview" className="w-full h-full object-contain p-2" />
                     ) : (
                       <ImageIcon className="w-8 h-8 text-slate-300" />
                     )}
@@ -707,7 +708,7 @@ export function SettingsView() {
                   <div className="flex-1 space-y-3 w-full">
                     <div className="flex gap-2">
                       <Input 
-                        placeholder="https://path-to-logo.png atau /uploads/..." 
+                        placeholder="Nama file logo (contoh: logo.png) atau URL" 
                         value={settings.APP_LOGO} 
                         onChange={e => setSettings(s => ({ ...s, APP_LOGO: e.target.value }))} 
                       />

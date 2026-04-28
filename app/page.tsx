@@ -13,6 +13,7 @@ import { PointMutationView } from '@/components/point-mutation-view';
 import { MemberProfileView } from '@/components/member-profile-view';
 import { UserProfileMenuPengurus } from '@/components/user-profile-menu-pengurus';
 import { Bell } from 'lucide-react';
+import { getImageUrl } from '@/lib/utils';
 
 export type TreatmentPath = 'REDEMPTION' | 'FULL_ATTENDANCE';
 
@@ -434,7 +435,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
                   {sysSettings?.APP_LOGO ? (
-                    <img src={sysSettings.APP_LOGO} alt="Logo" className="w-full h-full object-cover" />
+                    <img src={getImageUrl(sysSettings.APP_LOGO) || ''} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-white text-xs font-bold">{sysSettings?.APP_NAME?.[0] || 'P'}</span>
                   )}
