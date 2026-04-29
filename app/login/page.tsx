@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { PasswordInput } from '@/components/ui/password-input';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 flex items-center justify-center p-6 md:p-8">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl" />
@@ -58,38 +59,40 @@ export default function LoginPage() {
       <div className="relative w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4 shadow-xl shadow-indigo-900/50">
-            <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 bg-indigo-600 rounded-2xl mb-4 shadow-xl shadow-indigo-900/50 transition-all duration-300">
+            <svg className="w-8 h-8 md:w-9 md:h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white">PSDM System</h1>
-          <p className="text-indigo-300 mt-1 text-sm">Sistem Manajemen Pengembangan SDM</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white transition-all duration-300">PSDM System</h1>
+          <p className="text-indigo-300 mt-1 text-xs md:text-sm">Sistem Manajemen Pengembangan SDM</p>
         </div>
 
-        <Card className="border-0 shadow-2xl shadow-black/50 bg-white/95 backdrop-blur">
-          <CardContent className="p-8">
+        <Card className="border-0 shadow-2xl shadow-black/50 bg-white/95 backdrop-blur transition-all duration-300">
+          <CardContent className="p-6 md:p-8">
             {/* Mode Tabs */}
             <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
               <button
+                type="button"
                 onClick={() => { setMode('pengurus'); setError(''); }}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                className={`flex-1 py-2 md:py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                   mode === 'pengurus'
                     ? 'bg-white text-indigo-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                 }`}
               >
-                🎓 Login Pengurus
+                🎓 Pengurus
               </button>
               <button
+                type="button"
                 onClick={() => { setMode('admin'); setError(''); }}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                className={`flex-1 py-2 md:py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                   mode === 'admin'
                     ? 'bg-white text-indigo-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                 }`}
               >
-                🔐 Login Admin
+                🔐 Admin
               </button>
             </div>
 
@@ -128,8 +131,7 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label className="text-slate-700 font-medium">Password</Label>
-                <Input
-                  type="password"
+                <PasswordInput
                   name="password"
                   placeholder="Masukkan password"
                   autoComplete="new-password"

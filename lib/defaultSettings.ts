@@ -2,6 +2,8 @@ export const DEFAULT_SETTINGS = {
   APP_NAME: 'PSDM System',
   APP_LOGO: '',
   TARGET_POINTS: '100',
+  THRESHOLD_BAIK: '80',
+  THRESHOLD_PERHATIAN: '50',
   SP_THRESHOLDS: JSON.stringify([50, 30, 15]), // Threshold for SP1, SP2, SP3
   ALPHA_MULTIPLIER: '2',
   ALPHA_MAX_PENALTY: '50', // Absolute maximum penalty (positive number representing reduction)

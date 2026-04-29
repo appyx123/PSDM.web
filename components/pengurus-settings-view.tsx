@@ -5,6 +5,7 @@ import { User, Shield, Camera, Check, AlertCircle, Save, Eye, EyeOff, Loader2, A
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -50,7 +51,6 @@ export function PengurusSettingsView() {
 
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwErrors, setPwErrors] = useState<Record<string, string>>({});
-  const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false });
   const [isSavingPw, setIsSavingPw] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -449,60 +449,41 @@ export function PengurusSettingsView() {
               <CardDescription>Gunakan password yang kuat dan tidak mudah ditebak.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              {/* Password Lama */}
               <div>
                 <Label htmlFor="currentPw">Password Lama <span className="text-red-500">*</span></Label>
-                <div className="relative mt-1">
-                  <Input
-                    id="currentPw"
-                    type={showPw.current ? 'text' : 'password'}
-                    className={`pr-10 ${pwErrors.current ? 'border-red-500' : ''}`}
-                    placeholder="Masukkan password lama"
-                    value={pwForm.current}
-                    onChange={e => { setPwForm(p => ({ ...p, current: e.target.value })); if (pwErrors.current) setPwErrors(p => { const x = { ...p }; delete x.current; return x; }); }}
-                  />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setShowPw(p => ({ ...p, current: !p.current }))}>
-                    {showPw.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="currentPw"
+                  className={`mt-1 ${pwErrors.current ? 'border-red-500' : ''}`}
+                  placeholder="Masukkan password lama"
+                  value={pwForm.current}
+                  onChange={e => { setPwForm(p => ({ ...p, current: e.target.value })); if (pwErrors.current) setPwErrors(p => { const x = { ...p }; delete x.current; return x; }); }}
+                />
                 <FieldError msg={pwErrors.current} />
               </div>
-
+ 
               {/* Password Baru */}
               <div>
                 <Label htmlFor="newPw">Password Baru <span className="text-red-500">*</span></Label>
-                <div className="relative mt-1">
-                  <Input
-                    id="newPw"
-                    type={showPw.next ? 'text' : 'password'}
-                    className={`pr-10 ${pwErrors.next ? 'border-red-500' : ''}`}
-                    placeholder="Min. 6 karakter"
-                    value={pwForm.next}
-                    onChange={e => { setPwForm(p => ({ ...p, next: e.target.value })); if (pwErrors.next) setPwErrors(p => { const x = { ...p }; delete x.next; return x; }); }}
-                  />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setShowPw(p => ({ ...p, next: !p.next }))}>
-                    {showPw.next ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="newPw"
+                  className={`mt-1 ${pwErrors.next ? 'border-red-500' : ''}`}
+                  placeholder="Min. 6 karakter"
+                  value={pwForm.next}
+                  onChange={e => { setPwForm(p => ({ ...p, next: e.target.value })); if (pwErrors.next) setPwErrors(p => { const x = { ...p }; delete x.next; return x; }); }}
+                />
                 <FieldError msg={pwErrors.next} />
               </div>
-
+ 
               {/* Konfirmasi */}
               <div>
                 <Label htmlFor="confirmPw">Konfirmasi Password Baru <span className="text-red-500">*</span></Label>
-                <div className="relative mt-1">
-                  <Input
-                    id="confirmPw"
-                    type={showPw.confirm ? 'text' : 'password'}
-                    className={`pr-10 ${pwErrors.confirm ? 'border-red-500' : ''}`}
-                    placeholder="Ulangi password baru"
-                    value={pwForm.confirm}
-                    onChange={e => { setPwForm(p => ({ ...p, confirm: e.target.value })); if (pwErrors.confirm) setPwErrors(p => { const x = { ...p }; delete x.confirm; return x; }); }}
-                  />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setShowPw(p => ({ ...p, confirm: !p.confirm }))}>
-                    {showPw.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="confirmPw"
+                  className={`mt-1 ${pwErrors.confirm ? 'border-red-500' : ''}`}
+                  placeholder="Ulangi password baru"
+                  value={pwForm.confirm}
+                  onChange={e => { setPwForm(p => ({ ...p, confirm: e.target.value })); if (pwErrors.confirm) setPwErrors(p => { const x = { ...p }; delete x.confirm; return x; }); }}
+                />
                 <FieldError msg={pwErrors.confirm} />
               </div>
             </CardContent>

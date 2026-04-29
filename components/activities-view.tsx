@@ -142,7 +142,7 @@ export function ActivitiesView({
               {activity.description}
             </p>
 
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-4 gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Users className="w-4 h-4 text-slate-400" />
                 <span><strong className="text-slate-900">{activity.attendees.length}</strong> data tersimpan</span>

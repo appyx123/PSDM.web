@@ -122,7 +122,7 @@ export function ReportsView({ members = [] }: ReportsViewProps) {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Anggota"
           value={totalMembers}
@@ -287,7 +287,7 @@ export function ReportsView({ members = [] }: ReportsViewProps) {
         <p className="text-sm text-indigo-700 mb-4">
           Unduh data laporan dalam format yang Anda butuhkan
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button 
             onClick={handleExportPDF}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"

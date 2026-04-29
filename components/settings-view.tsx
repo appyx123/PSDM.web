@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
@@ -272,7 +273,7 @@ export function SettingsView() {
       )}
 
       <Tabs defaultValue="kalkulasi" className="space-y-6">
-        <TabsList className="bg-white border border-slate-200 p-1 h-auto gap-2">
+        <TabsList className="bg-white border border-slate-200 p-1 h-auto flex-wrap justify-start md:justify-center gap-2">
           <TabsTrigger value="kalkulasi" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 px-4 py-2">
             <BarChart3 className="w-4 h-4 mr-2" /> Kalkulasi Poin
           </TabsTrigger>
@@ -435,7 +436,7 @@ export function SettingsView() {
                   <p className="text-xs text-amber-800">Ambang batas kustom aktif. Sistem akan menggunakan nilai ini untuk auto-flagging SP.</p>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label className="text-amber-600 font-bold flex items-center gap-2">
                     Threshold SP 1 {!isCustomSP && <Lock className="w-3 h-3 text-slate-400" />}
@@ -563,11 +564,11 @@ export function SettingsView() {
 
                 <div className="pt-6 border-t">
                   <h3 className="font-semibold text-sm mb-4">Tambah Admin Baru</h3>
-                  <form onSubmit={handleAddAdmin} className="grid grid-cols-3 gap-3">
+                  <form onSubmit={handleAddAdmin} className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <Input placeholder="Nama" value={newAdmin.name} onChange={e => setNewAdmin(p => ({ ...p, name: e.target.value }))} required />
                     <Input placeholder="Email" type="email" value={newAdmin.email} onChange={e => setNewAdmin(p => ({ ...p, email: e.target.value }))} required />
                     <div className="flex gap-2">
-                      <Input placeholder="Password" type="password" value={newAdmin.password} onChange={e => setNewAdmin(p => ({ ...p, password: e.target.value }))} required />
+                      <PasswordInput placeholder="Password" value={newAdmin.password} onChange={e => setNewAdmin(p => ({ ...p, password: e.target.value }))} required />
                       <Button type="submit"><Plus className="w-4 h-4" /></Button>
                     </div>
                   </form>

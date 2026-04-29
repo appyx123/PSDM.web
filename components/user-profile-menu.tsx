@@ -43,7 +43,7 @@ export function UserProfileMenu({
           <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold">
             {initials}
           </div>
-          <div className="flex flex-col items-start">
+          <div className="hidden md:flex flex-col items-start">
             <span className="text-sm font-medium text-slate-900">{userName}</span>
             <span className="text-xs text-slate-500">{userEmail}</span>
           </div>

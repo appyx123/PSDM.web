@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DEFAULT_SETTINGS, SettingKey } from '@/lib/defaultSettings';
@@ -225,17 +226,17 @@ export default function AdminSettingsPage() {
                   <Label>Maksimal Penalti Alpha (Poin Negatif)</Label>
                   <Input 
                     type="number" 
-                    value={settings.MAX_ALPHA_PENALTY} 
-                    onChange={e => setSettings(s => ({ ...s, MAX_ALPHA_PENALTY: e.target.value }))} 
+                    value={settings.ALPHA_MAX_PENALTY} 
+                    onChange={e => setSettings(s => ({ ...s, ALPHA_MAX_PENALTY: e.target.value }))} 
                   />
-                  <p className="text-[10px] text-slate-400 italic">Contoh: -50 (penalti tidak akan lebih parah dari angka ini).</p>
+                  <p className="text-[10px] text-slate-400 italic">Contoh: 50 (penalti tidak akan lebih parah dari angka ini).</p>
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t">
-                 <Button variant="ghost" size="sm" onClick={() => { handleReset('ALPHA_MULTIPLIER'); handleReset('MAX_ALPHA_PENALTY'); }}>Reset</Button>
+                 <Button variant="ghost" size="sm" onClick={() => { handleReset('ALPHA_MULTIPLIER'); handleReset('ALPHA_MAX_PENALTY'); }}>Reset</Button>
                  <Button size="sm" onClick={async () => { 
                    await handleUpdateSetting('ALPHA_MULTIPLIER', settings.ALPHA_MULTIPLIER);
-                   await handleUpdateSetting('MAX_ALPHA_PENALTY', settings.MAX_ALPHA_PENALTY);
+                   await handleUpdateSetting('ALPHA_MAX_PENALTY', settings.ALPHA_MAX_PENALTY);
                  }}>Simpan Penalti</Button>
               </div>
             </CardContent>
@@ -336,7 +337,7 @@ export default function AdminSettingsPage() {
                     <Input placeholder="Nama" value={newAdmin.name} onChange={e => setNewAdmin(p => ({ ...p, name: e.target.value }))} required />
                     <Input placeholder="Email" type="email" value={newAdmin.email} onChange={e => setNewAdmin(p => ({ ...p, email: e.target.value }))} required />
                     <div className="flex gap-2">
-                      <Input placeholder="Password" type="password" value={newAdmin.password} onChange={e => setNewAdmin(p => ({ ...p, password: e.target.value }))} required />
+                      <PasswordInput placeholder="Password" value={newAdmin.password} onChange={e => setNewAdmin(p => ({ ...p, password: e.target.value }))} required />
                       <Button type="submit"><Plus className="w-4 h-4" /></Button>
                     </div>
                   </form>

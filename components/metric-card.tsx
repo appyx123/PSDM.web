@@ -26,7 +26,7 @@ export function MetricCard({ title, value, change, icon, color }: MetricCardProp
   };
 
   return (
-    <div className={`${colorClasses[color]} border rounded-lg p-6`}>
+    <div className={`${colorClasses[color]} border rounded-lg p-4 md:p-6`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-slate-600">{title}</p>

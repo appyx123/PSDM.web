@@ -142,8 +142,8 @@ export function GovernanceView({ members, onStartTreatment, sysSettings }: Gover
         </div>
         
         {flaggedMembers.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto border-t border-slate-100">
+            <table className="w-full text-left text-sm min-w-[600px]">
               <thead className="bg-slate-50/50 text-slate-500 border-b border-slate-100">
                 <tr>
                   <th className="px-4 py-3 font-medium">Nama Anggota</th>
@@ -213,7 +213,7 @@ export function GovernanceView({ members, onStartTreatment, sysSettings }: Gover
         </div>
 
         {treatmentMembers.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {treatmentMembers.map((member) => {
               const treatment = member.treatment!;
               const currentPoints = member.points ?? 0;

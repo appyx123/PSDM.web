@@ -165,7 +165,7 @@ export function MembersView({
             Kelola data keanggotaan, jabatan, dan pantau profil pengurus.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 md:mt-0">
           <Button 
             variant="outline" 
             size="sm" 
@@ -206,7 +206,7 @@ export function MembersView({
       </div>
 
       {/* Filter & Sort Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-end">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-2 lg:flex lg:flex-wrap gap-4 items-end">
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
             <Filter className="w-3 h-3" /> Departemen
@@ -264,7 +264,7 @@ export function MembersView({
           </Select>
         </div>
 
-        <div className="space-y-1.5 ml-auto">
+        <div className="space-y-1.5 col-span-2 lg:ml-auto">
           <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
             <ArrowUpDown className="w-3 h-3" /> Urutkan Berdasarkan
           </Label>
@@ -286,7 +286,7 @@ export function MembersView({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold text-slate-400 uppercase">Total Pengurus</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{members.length}</p>

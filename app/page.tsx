@@ -126,6 +126,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<SessionUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sysSettings, setSysSettings] = useState<any>(null);
 
   const handleLogout = async () => {
@@ -482,14 +483,16 @@ export default function DashboardPage() {
 
   // Admin full dashboard
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       <DashboardSidebar 
         activeItem={activeTab} 
         onItemClick={handleTabChange} 
         appName={sysSettings?.APP_NAME}
         appLogo={sysSettings?.APP_LOGO}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
         <DashboardHeader
           userName={session?.name || 'Admin'}
           userEmail="admin@psdm.id"
@@ -499,12 +502,16 @@ export default function DashboardPage() {
           totalCount={members.length}
           showSearch={activeTab === 'members'}
           onLogout={handleLogout}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
+        <main className="flex-1 overflow-auto bg-slate-50/50">
+          <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full">
             {isLoading ? (
               <div className="flex items-center justify-center h-64 text-slate-500">
-                Loading data from database...
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                  <p className="text-sm font-medium">Memuat data...</p>
+                </div>
               </div>
             ) : (
               renderContent()

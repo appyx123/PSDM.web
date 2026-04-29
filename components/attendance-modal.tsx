@@ -84,7 +84,7 @@ export function AttendanceModal({
       <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[85vh]">
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-2xl bg-white rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[85vh]">
             {/* Header */}
             <div className="flex flex-col gap-2 p-6 border-b border-slate-100 bg-slate-50">
               <div className="flex items-start justify-between">
@@ -142,7 +142,7 @@ export function AttendanceModal({
                   return (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors gap-3"
                     >
                       <div className="flex items-center gap-4">
                         <div className="relative">
@@ -177,7 +177,7 @@ export function AttendanceModal({
                         value={currentStatus}
                         onChange={(e) => handleStatusChange(member, e.target.value)}
                         className={cn(
-                          "px-3 py-1.5 rounded-lg text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-indigo-500",
+                          "w-full sm:w-auto px-3 py-1.5 rounded-lg text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-indigo-500",
                           currentStatus === '' ? "border-slate-300 text-slate-500" :
                           currentStatus === 'TEPAT_WAKTU' ? "border-green-300 bg-green-50 text-green-700" :
                           currentStatus === 'ALPHA' ? "border-red-300 bg-red-50 text-red-700" :
