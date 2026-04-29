@@ -1,53 +1,63 @@
-# PSDM.web
+Untuk memperbarui aplikasi di server dengan kode terbaru dari GitHub, ikuti langkah-langkah ini:
 
-Sistem Manajemen Pengembangan Sumber Daya Manusia (PSDM) — Dashboard berbasis web untuk mengelola anggota, kegiatan, presensi, dan poin evaluasi organisasi.
+---
 
-## Tech Stack
+### 🔄 Langkah Update di Server
 
-- **Framework**: Next.js 16 (App Router + Turbopack)
-- **Database**: SQLite via Prisma ORM
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Auth**: JWT (HTTP-only Cookie) + bcryptjs
-
-## Fitur Utama
-
-- 📋 **Manajemen Anggota** — CRUD data pengurus/anggota dengan sistem PRN
-- 📅 **Manajemen Kegiatan** — Jadwal kegiatan dan pencatatan presensi
-- ⭐ **Evaluasi & Apresiasi** — Mutasi poin manual (Reward & Punishment)
-- 📊 **Governance Dashboard** — Monitoring poin, status, dan EWS anggota
-- ⚙️ **Pengaturan** — Kategori poin dinamis dan manajemen akun pengurus
-- 🔐 **Autentikasi Dual-Role** — Admin (email/password) & Pengurus (PRN/password)
-
-## Setup
-
+**1. Masuk ke folder proyek**
 ```bash
-# Install dependencies
+cd ~/psdm.web
+```
+
+**2. Hentikan sementara aplikasi (opsional, agar lebih bersih)**
+```bash
+pm2 stop psdm
+```
+
+**3. Tarik kode terbaru dari GitHub**
+```bash
+git pull origin main
+```
+> Jika ada konflik atau error, cukup hapus perubahan lokal dulu dengan `git stash` atau `git reset --hard origin/main`.
+
+**4. Install dependensi (hanya jika ada tambahan)**
+```bash
 npm install
+```
+> Kalau tidak ada perubahan di `package.json`, langkah ini bisa dilewati.
 
-# Setup database
-npx prisma db push
+**5. Generate Prisma client (jika ada perubahan schema)**
+```bash
 npx prisma generate
-
-# Seed admin pertama
-npx tsx prisma/seed.ts
-
-# Jalankan dev server
-npm run dev
 ```
 
-## Akun Default
-
-| Role  | Kredensial                        |
-|-------|-----------------------------------|
-| Admin | Email: `admin@psdm.id` / PW: `admin123` |
-
-> ⚠️ Segera ubah password default setelah pertama kali login.
-
-## Environment
-
-Buat file `.env` di root project:
-
-```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="ganti-dengan-secret-yang-kuat"
+**6. Jalankan migrasi database (jika ada migrasi baru)**
+```bash
+npx prisma migrate deploy
 ```
+
+**7. Build ulang Next.js**
+```bash
+npm run build
+```
+
+**8. Restart aplikasi**
+```bash
+pm2 restart psdm
+```
+
+**9. Cek log untuk memastikan tidak error**
+```bash
+pm2 logs psdm --lines 20
+```
+
+---
+
+### 📝 Catatan Penting
+- **Backup database** sebelum update jika kamu ragu:
+  ```bash
+  cp /mnt/data/psdm-db/dev.db /mnt/data/psdm-db/dev.db.backup-$(date +%Y%m%d-%H%M)
+  ```
+- File dan folder yang tidak di-track oleh Git (seperti `.env`, `public/uploads`, `dev.db`) tidak akan terpengaruh oleh `git pull`.
+
+Setelah semua langkah selesai, buka `https://psdmperisai.online` dan pastikan fitur berjalan normal.
