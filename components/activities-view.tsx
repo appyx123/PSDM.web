@@ -2,17 +2,19 @@
 
 import { useState } from 'react';
 import { Activity, Member, ActivityScope, AttendanceStatus } from '@/app/page';
-import { CalendarDays, Plus, Download, Users, Trash2, FileSpreadsheet, FileText } from 'lucide-react';
+import { CalendarDays, Plus, Download, Users, Trash2, FileSpreadsheet, FileText, Pencil } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AddActivityModal } from './add-activity-modal';
+import { EditActivityModal } from './edit-activity-modal';
 import { AttendanceModal } from './attendance-modal';
 
 interface ActivitiesViewProps {
   activities: Activity[];
   members: Member[];
-  onAddActivity: (data: { name: string; date: string; description: string; scope: ActivityScope }) => void;
+  onAddActivity: (data: { name: string; date: string; time: string; description: string; scope: ActivityScope }) => void;
+  onUpdateActivity: (id: string, data: { name: string; date: string; time: string; description: string; scope: ActivityScope }) => void;
   onDeleteActivity: (activityId: string) => void;
   onUpdateAttendance: (
     activityId: string, 
@@ -27,10 +29,12 @@ export function ActivitiesView({
   activities,
   members: allMembers,
   onAddActivity,
+  onUpdateActivity,
   onDeleteActivity,
   onUpdateAttendance,
 }: ActivitiesViewProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [selectedActivityForAttendance, setSelectedActivityForAttendance] = useState<Activity | null>(null);
 
   // Filter only active members for attendance and exports
@@ -130,7 +134,7 @@ export function ActivitiesView({
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                  })}
+                  })} • {activity.time || '00:00'} WIB
                 </p>
               </div>
               <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
@@ -170,6 +174,13 @@ export function ActivitiesView({
                   <FileText className="w-5 h-5" />
                 </button>
                 <button
+                  onClick={() => setEditingActivity(activity)}
+                  className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-200"
+                  title="Edit Kegiatan"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
+                <button
                   onClick={() => {
                     if (window.confirm('Yakin ingin menghapus kegiatan ini?')) {
                       onDeleteActivity(activity.id);
@@ -199,6 +210,13 @@ export function ActivitiesView({
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={onAddActivity}
+      />
+
+      <EditActivityModal
+        isOpen={editingActivity !== null}
+        onClose={() => setEditingActivity(null)}
+        activity={editingActivity}
+        onUpdate={onUpdateActivity}
       />
 
       <AttendanceModal

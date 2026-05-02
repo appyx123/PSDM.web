@@ -11,8 +11,10 @@ import { ActivitiesView } from '@/components/activities-view';
 import { GovernanceView } from '@/components/governance-view';
 import { PointMutationView } from '@/components/point-mutation-view';
 import { MemberProfileView } from '@/components/member-profile-view';
+import { PermissionsView } from '@/components/permissions-view';
 import { UserProfileMenuPengurus } from '@/components/user-profile-menu-pengurus';
-import { Bell } from 'lucide-react';
+import { NotificationBell } from '@/components/notification-bell';
+import { PengurusPelaporanView } from '@/components/pengurus-pelaporan-view';
 import { getImageUrl } from '@/lib/utils';
 
 export type TreatmentPath = 'REDEMPTION' | 'FULL_ATTENDANCE';
@@ -56,12 +58,15 @@ export type AttendanceStatus =
 export interface AttendanceRecord {
   memberId: string;
   status: AttendanceStatus;
+  isEmergencyIzin?: boolean;
+  emergencyReason?: string;
 }
 
 export interface Activity {
   id: string;
   name: string;
   date: string;
+  time?: string;
   description: string;
   scope: ActivityScope;
   attendees: AttendanceRecord[];
@@ -103,13 +108,13 @@ interface SessionUser {
 }
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'perizinan' | 'pelaporan'>('dashboard');
   
   // Sync tab with URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi'].includes(tab)) {
+    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'pelaporan', 'perizinan'].includes(tab)) {
       setActiveTab(tab as any);
     }
   }, []);
@@ -281,7 +286,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleAddActivity = async (data: { name: string; date: string; description: string; scope: ActivityScope }) => {
+  const handleAddActivity = async (data: { name: string; date: string; time: string; description: string; scope: ActivityScope }) => {
     const res = await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -295,6 +300,20 @@ export default function DashboardPage() {
         attendees: [],
       };
       setActivities([...activities, newActivity]);
+    }
+  };
+
+  const handleUpdateActivity = async (activityId: string, data: { name: string; date: string; time: string; description: string; scope: ActivityScope }) => {
+    const res = await fetch(`/api/activities/${activityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) {
+      const updatedData = await res.json();
+      setActivities(activities.map(a => a.id === activityId ? { ...a, ...data } : a));
+    } else {
+      alert('Gagal menyimpan perubahan kegiatan');
     }
   };
 
@@ -387,6 +406,7 @@ export default function DashboardPage() {
             activities={activities}
             members={derivedMembers}
             onAddActivity={handleAddActivity}
+            onUpdateActivity={handleUpdateActivity}
             onDeleteActivity={handleDeleteActivity}
             onUpdateAttendance={handleUpdateAttendance}
           />
@@ -406,6 +426,8 @@ export default function DashboardPage() {
             onRefresh={fetchData}
           />
         );
+      case 'perizinan':
+        return <PermissionsView sysSettings={sysSettings} />;
       default:
         return <DashboardView members={derivedMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
     }
@@ -433,7 +455,6 @@ export default function DashboardPage() {
           <header className="bg-white border-b border-slate-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
                   {sysSettings?.APP_LOGO ? (
                     <img src={getImageUrl(sysSettings.APP_LOGO) || ''} alt="Logo" className="w-full h-full object-cover" />
@@ -443,12 +464,24 @@ export default function DashboardPage() {
                 </div>
                 <span className="text-sm font-semibold text-slate-700">{sysSettings?.APP_NAME || 'PSDM System'}</span>
               </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                  <Bell className="w-5 h-5 text-slate-600" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              
+              <div className="hidden md:flex items-center gap-6 mx-8">
+                <button 
+                  onClick={() => handleTabChange('dashboard')}
+                  className={`text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-500 hover:text-slate-900'}`}
+                >
+                  Profil & Dashboard
                 </button>
+                <button 
+                  onClick={() => handleTabChange('pelaporan')}
+                  className={`text-sm font-medium transition-colors ${activeTab === 'pelaporan' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-500 hover:text-slate-900'}`}
+                >
+                  Pelaporan Klaim
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <NotificationBell />
                 <UserProfileMenuPengurus
                   userName={session.name}
                   userPrn={session.prn}
@@ -462,12 +495,16 @@ export default function DashboardPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center h-64 text-slate-500">Memuat profil...</div>
               ) : myMember ? (
-                <MemberProfileView 
-                  member={myMember} 
-                  activities={activities} 
-                  sessionName={session.name} 
-                  sysSettings={sysSettings}
-                />
+                activeTab === 'pelaporan' ? (
+                  <PengurusPelaporanView member={myMember} />
+                ) : (
+                  <MemberProfileView 
+                    member={myMember} 
+                    activities={activities} 
+                    sessionName={session.name} 
+                    sysSettings={sysSettings}
+                  />
+                )
               ) : (
                 <div className="text-center py-16 text-slate-500">
                   <p className="text-lg font-medium">Profil tidak ditemukan.</p>

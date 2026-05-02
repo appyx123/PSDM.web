@@ -1,39 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 
-import { ActivityScope } from '@/app/page';
+import { Activity, ActivityScope } from '@/app/page';
 
-interface AddActivityModalProps {
+interface EditActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (data: { name: string; date: string; time: string; description: string; scope: ActivityScope }) => void;
+  activity: Activity | null;
+  onUpdate: (id: string, data: { name: string; date: string; time: string; description: string; scope: ActivityScope }) => void;
 }
 
-export function AddActivityModal({ isOpen, onClose, onAdd }: AddActivityModalProps) {
+export function EditActivityModal({ isOpen, onClose, activity, onUpdate }: EditActivityModalProps) {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('08:00');
   const [description, setDescription] = useState('');
   const [scope, setScope] = useState<ActivityScope>('INTERNAL');
 
+  useEffect(() => {
+    if (activity) {
+      setName(activity.name);
+      // Ensure date is properly formatted for date input (YYYY-MM-DD)
+      try {
+        const d = new Date(activity.date);
+        setDate(d.toISOString().split('T')[0]);
+      } catch (e) {
+        setDate(activity.date.split('T')[0]);
+      }
+      setTime(activity.time || '08:00');
+      setDescription(activity.description);
+      setScope(activity.scope);
+    }
+  }, [activity]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAdd({
-      name,
-      date,
-      time,
-      description,
-      scope
-    });
-    // Reset
-    setName('');
-    setDate('');
-    setTime('08:00');
-    setDescription('');
-    setScope('INTERNAL');
+    if (activity) {
+      onUpdate(activity.id, {
+        name,
+        date,
+        time,
+        description,
+        scope
+      });
+    }
     onClose();
   };
 
@@ -45,10 +58,10 @@ export function AddActivityModal({ isOpen, onClose, onAdd }: AddActivityModalPro
           <div className="flex items-center justify-between p-6 border-b border-slate-100">
             <div>
               <Dialog.Title className="text-lg font-bold text-slate-900">
-                Buat Kegiatan Baru
+                Edit Kegiatan
               </Dialog.Title>
               <Dialog.Description className="sr-only">
-                Formulir untuk membuat kegiatan baru
+                Formulir untuk mengedit data kegiatan
               </Dialog.Description>
             </div>
             <Dialog.Close className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -131,7 +144,7 @@ export function AddActivityModal({ isOpen, onClose, onAdd }: AddActivityModalPro
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
               >
-                Simpan
+                Simpan Perubahan
               </button>
             </div>
           </form>

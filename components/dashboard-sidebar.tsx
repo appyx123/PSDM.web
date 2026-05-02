@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, Star, X } from 'lucide-react';
+import { Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, Star, X, FileText } from 'lucide-react';
 import { cn, getImageUrl } from '@/lib/utils';
 
 interface DashboardSidebarProps {
@@ -26,6 +26,7 @@ export function DashboardSidebar({
     { id: 'activities', label: 'Kegiatan', icon: CalendarDays },
     { id: 'governance', label: 'Tata Kelola', icon: ShieldAlert },
     { id: 'evaluasi', label: 'Evaluasi & Apresiasi', icon: Star },
+    { id: 'perizinan', label: 'Perizinan', icon: FileText },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

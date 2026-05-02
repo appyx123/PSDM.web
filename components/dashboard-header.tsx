@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Bell, X, Menu } from 'lucide-react';
+import { Search, X, Menu } from 'lucide-react';
 import { UserProfileMenu } from '@/components/user-profile-menu';
 import { ProfileSettingsModal } from '@/components/profile-settings-modal';
+import { NotificationBell } from '@/components/notification-bell';
 
 interface DashboardHeaderProps {
   userName?: string;
@@ -90,10 +91,7 @@ export function DashboardHeader({
             )}
 
             {/* Notifications */}
-            <button className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
-              <Bell className="w-5 h-5 text-slate-600" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <NotificationBell />
 
             {/* User Profile Menu */}
             <UserProfileMenu

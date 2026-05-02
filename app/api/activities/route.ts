@@ -14,6 +14,7 @@ export async function GET() {
       id: a.id,
       name: a.name,
       date: a.date,
+      time: a.time,
       description: a.description,
       scope: a.scope as 'EKSTERNAL' | 'INTERNAL' | 'KEPANITIAAN',
       attendees: a.attendees.map(att => ({
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       data: {
         name: data.name,
         date: data.date,
+        time: data.time || "00:00",
         description: data.description,
         scope: data.scope,
       }

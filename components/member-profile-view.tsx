@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Member, Activity, PURE_MATRIX } from '@/app/page';
+import { WidgetIzinSaya } from './widget-izin-saya';
+import { WidgetRiwayatMutasi } from './widget-riwayat-mutasi';
 
 interface MemberProfileViewProps {
   member: Member;
@@ -129,6 +131,12 @@ export function MemberProfileView({ member, activities, sessionName, sysSettings
           </CardContent>
         </Card>
       </div>
+
+      {/* Izin Widget */}
+      <WidgetIzinSaya member={member} />
+
+      {/* Point Mutation History Widget */}
+      <WidgetRiwayatMutasi member={member} />
 
       {/* Attendance History */}
       <Card>

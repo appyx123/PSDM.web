@@ -32,6 +32,9 @@ model Member {
   attendances           AttendanceRecord[]
   pointLogs             PointLog[]
   spLogs                SPLog[]
+  permissions           Permission[]
+  pointClaims           PointClaim[]
+  notifications         Notification[]
   user                  User?
 }
 
@@ -72,7 +75,11 @@ model User {
   memberId  String?  @unique
   member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
   
-  audits    SettingsAudit[]
+  audits              SettingsAudit[]
+  pjPermissions       Permission[] @relation("PJRelation")
+  verifiedPermissions Permission[] @relation("VerifierRelation")
+  verifiedClaims      PointClaim[] @relation("ClaimVerifierRelation")
+  notifications       Notification[]
 }
 
 model SystemSetting {
@@ -107,9 +114,11 @@ model Activity {
   id          String             @id @default(cuid())
   name        String
   date        String
+  time        String             @default("00:00")
   description String
   scope       String
   attendees   AttendanceRecord[]
+  permissions Permission[]
 }
 
 model AttendanceRecord {
@@ -133,4 +142,57 @@ model PointCategory {
   points    Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Permission {
+  id                 String    @id @default(cuid())
+  memberId           String
+  activityId         String
+  type               String    // sick, academic, emergency, late
+  reason             String
+  evidence           String?
+  status             String    // pending, approved, rejected, cancelled, emergency_pending, emergency_quota_full
+  pjId               String?   // Reference to User admin
+  verifiedById       String?   // Reference to User admin
+  verifiedAt         DateTime?
+  cancellationReason String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  pj         User?    @relation("PJRelation", fields: [pjId], references: [id], onDelete: SetNull)
+  verifiedBy User?    @relation("VerifierRelation", fields: [verifiedById], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  memberId  String?
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member Member? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model PointClaim {
+  id               String    @id @default(cuid())
+  memberId         String
+  category         String
+  subCategory      String
+  description      String
+  evidence         String
+  claimedPoints    Int
+  status           String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  verifiedById     String?
+  verifiedAt       DateTime?
+  rejectionReason  String?
+  createdAt        DateTime  @default(now())
+
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  verifiedBy User?    @relation("ClaimVerifierRelation", fields: [verifiedById], references: [id], onDelete: SetNull)
 }
