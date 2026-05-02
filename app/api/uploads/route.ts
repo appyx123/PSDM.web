@@ -38,3 +38,36 @@ export async function GET(request: Request) {
     return new NextResponse('File not found', { status: 404 });
   }
 }
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+    }
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Create unique filename
+    const uniqueId = Math.random().toString(36).substring(2, 15);
+    const fileName = `${uniqueId}-${file.name.replace(/\s+/g, '-')}`;
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const filePath = path.join(uploadDir, fileName);
+
+    // Ensure directory exists
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    // Write file
+    await fs.writeFile(filePath, buffer);
+    
+    // Return the URL to the file
+    const fileUrl = `/api/uploads?file=${fileName}`;
+    
+    return NextResponse.json({ url: fileUrl, fileName });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+  }
+}

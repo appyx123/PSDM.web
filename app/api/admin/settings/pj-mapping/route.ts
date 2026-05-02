@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     
     const session = await verifyToken(token);
-    if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const setting = await prisma.systemSetting.findUnique({ where: { key: 'PJ_MAPPING' } });
     const mapping = setting && setting.value ? JSON.parse(setting.value) : {};
@@ -30,7 +30,9 @@ export async function POST(request: Request) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     
     const session = await verifyToken(token);
-    if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || session.role !== 'SUPER_ADMIN') {
+        return NextResponse.json({ error: 'Forbidden: Super Admin only' }, { status: 403 });
+    }
 
     const jsonString = JSON.stringify(data);
 

@@ -10,14 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, CheckCircle, XCircle, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, AlertTriangle, AlertCircle, Loader2, ShieldAlert } from 'lucide-react';
 import { Member } from '@/app/page';
 
 interface PermissionsViewProps {
   sysSettings?: any;
+  userRole?: string;
+  userId?: string;
 }
 
-export function PermissionsView({ sysSettings }: PermissionsViewProps) {
+export function PermissionsView({ sysSettings, userRole, userId }: PermissionsViewProps) {
   const [activeTab, setActiveTab] = useState('masuk');
   const [permissions, setPermissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +55,7 @@ export function PermissionsView({ sysSettings }: PermissionsViewProps) {
       const res = await fetch('/api/users');
       if (res.ok) {
         const data = await res.json();
-        setUsers(data.filter((u: any) => u.role === 'ADMIN'));
+        setUsers(data.filter((u: any) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN'));
       }
     } catch(e) {}
   };
@@ -145,11 +147,29 @@ export function PermissionsView({ sysSettings }: PermissionsViewProps) {
         </div>
       </div>
 
+      {userRole === 'ADMIN' && (
+        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-indigo-600 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-indigo-900">Filter PJ Aktif</p>
+            <p className="text-xs text-indigo-700">
+              Anda hanya melihat pengajuan dari departemen: {' '}
+              <span className="font-bold">
+                {Object.entries(pjMapping)
+                  .filter(([_, uid]) => uid === userId)
+                  .map(([dept]) => dept)
+                  .join(', ') || 'Tidak ada (Hubungi Super Admin)'}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border p-1 rounded-lg">
           <TabsTrigger value="masuk">Pengajuan Masuk</TabsTrigger>
           <TabsTrigger value="riwayat">Riwayat</TabsTrigger>
-          <TabsTrigger value="pj">Pengaturan PJ</TabsTrigger>
+          {userRole === 'SUPER_ADMIN' && <TabsTrigger value="pj">Pengaturan PJ</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="masuk" className="mt-4">
@@ -259,32 +279,34 @@ export function PermissionsView({ sysSettings }: PermissionsViewProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="pj" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mapping PJ Perizinan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {departments.map(dept => (
-                  <div key={dept} className="p-4 border rounded-xl space-y-2 bg-slate-50">
-                    <Label className="font-bold text-slate-700">{dept}</Label>
-                    <Select value={pjMapping[dept] || ''} onValueChange={(val) => handleSavePj(dept, val)}>
-                      <SelectTrigger className="bg-white">
-                         <SelectValue placeholder="Pilih Admin PJ..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {users.map(u => (
-                          <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {userRole === 'SUPER_ADMIN' && (
+          <TabsContent value="pj" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Mapping PJ Perizinan</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {departments.map(dept => (
+                    <div key={dept} className="p-4 border rounded-xl space-y-2 bg-slate-50">
+                      <Label className="font-bold text-slate-700">{dept}</Label>
+                      <Select value={pjMapping[dept] || ''} onValueChange={(val) => handleSavePj(dept, val)}>
+                        <SelectTrigger className="bg-white">
+                           <SelectValue placeholder="Pilih Admin PJ..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {users.map(u => (
+                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* VERIFY MODAL */}

@@ -9,7 +9,7 @@ async function getAdminSession() {
   const token = cookieStore.get('session')?.value;
   if (!token) return null;
   const payload = await verifyToken(token);
-  if (!payload || payload.role !== 'ADMIN') return null;
+  if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPER_ADMIN')) return null;
   return payload;
 }
 
@@ -48,7 +48,21 @@ export async function POST(request: Request) {
       }
     }
 
+    if (session.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden: Hanya Super Admin yang dapat mengubah pengaturan.' }, { status: 403 });
+    }
+
     await updateSetting(key as SettingKey, value, session.userId);
+
+    // Create a general audit log for Super Admin actions
+    await prisma.auditLog.create({
+      data: {
+        userId: session.userId,
+        action: 'UPDATE_SETTING',
+        details: `Updated ${key} to ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`
+      }
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Settings update error:', error);

@@ -146,51 +146,54 @@ export function ActivitiesView({
               {activity.description}
             </p>
 
-            <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-4 gap-4">
+            <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between border-t border-slate-100 pt-4 gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Users className="w-4 h-4 text-slate-400" />
                 <span><strong className="text-slate-900">{activity.attendees.length}</strong> data tersimpan</span>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                 <button
                   onClick={() => setSelectedActivityForAttendance(activity)}
-                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors mr-2"
+                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
                 >
                   Isi Presensi
                 </button>
-                <button
-                  onClick={() => handleExportActivityExcel(activity)}
-                  className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
-                  title="Export Excel"
-                >
-                  <FileSpreadsheet className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleExportActivityPDF(activity)}
-                  className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
-                  title="Export PDF"
-                >
-                  <FileText className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setEditingActivity(activity)}
-                  className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-200"
-                  title="Edit Kegiatan"
-                >
-                  <Pencil className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm('Yakin ingin menghapus kegiatan ini?')) {
-                      onDeleteActivity(activity.id);
-                    }
-                  }}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Hapus Kegiatan"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleExportActivityExcel(activity)}
+                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
+                    title="Export Excel"
+                  >
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleExportActivityPDF(activity)}
+                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                    title="Export PDF"
+                  >
+                    <FileText className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setEditingActivity(activity)}
+                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-200"
+                    title="Edit Kegiatan"
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Yakin ingin menghapus kegiatan ini?')) {
+                        onDeleteActivity(activity.id);
+                      }
+                    }}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Hapus Kegiatan"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

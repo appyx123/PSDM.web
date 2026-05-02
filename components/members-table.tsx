@@ -16,9 +16,9 @@ import { cn, getImageUrl } from '@/lib/utils';
 
 interface MembersTableProps {
   members: Member[];
-  onEdit: (member: Member) => void;
-  onDelete: (memberId: string) => void;
-  onView: (member: Member) => void;
+  onEdit?: (member: Member) => void;
+  onDelete?: (memberId: string) => void;
+  onView?: (member: Member) => void;
 }
 
 export function MembersTable({ members, onEdit, onDelete, onView }: MembersTableProps) {
@@ -49,8 +49,11 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
           {members.map((member) => (
             <TableRow 
               key={member.id} 
-              className="hover:bg-slate-50/80 cursor-pointer transition-colors group"
-              onClick={() => onView(member)}
+              className={cn(
+                "hover:bg-slate-50/80 transition-colors group",
+                onView ? "cursor-pointer" : "cursor-default"
+              )}
+              onClick={() => onView?.(member)}
             >
               <TableCell className="py-4">
                 <div className="flex items-center gap-3">
@@ -99,30 +102,36 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
               </TableCell>
               <TableCell className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onView(member)}
-                    className="w-8 h-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(member)}
-                    className="w-8 h-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(member.id)}
-                    className="w-8 h-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {onView && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onView(member)}
+                      className="w-8 h-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(member)}
+                      className="w-8 h-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(member.id)}
+                      className="w-8 h-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

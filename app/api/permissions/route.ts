@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     const token = cookieStore.get('session')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const session = await verifyToken(token);
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'PENGURUS')) {
+    if (!session || !['SUPER_ADMIN', 'ADMIN', 'PENGURUS'].includes(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -99,9 +99,27 @@ export async function GET(request: Request) {
     const statusParam = url.searchParams.get('status');
     const activityId = url.searchParams.get('activityId');
     const department = url.searchParams.get('department');
-    const pjId = url.searchParams.get('pjId');
+    let pjId = url.searchParams.get('pjId');
 
     const where: any = {};
+
+    // For standard ADMIN, restrict to their CURRENTLY assigned departments in PJ_MAPPING
+    if (session.role === 'ADMIN') {
+      const setting = await prisma.systemSetting.findUnique({ where: { key: 'PJ_MAPPING' } });
+      if (setting && setting.value) {
+        const mapping = JSON.parse(setting.value);
+        const myDepts = Object.entries(mapping)
+          .filter(([_, uid]) => uid === session.userId)
+          .map(([dept]) => dept);
+        
+        where.member = { department: { in: myDepts } };
+      } else {
+        where.id = 'NONE'; // Show nothing if no mapping exists
+      }
+    } else if (session.role === 'SUPER_ADMIN' && pjId) {
+      where.pjId = pjId;
+    }
+
     if (statusParam) {
       if (statusParam === 'pending_all') {
         where.status = { in: ['pending', 'emergency_pending', 'emergency_quota_full'] };
@@ -112,7 +130,22 @@ export async function GET(request: Request) {
       }
     }
     if (activityId) where.activityId = activityId;
-    if (department) where.member = { department };
+    
+    // Merge department filter with Admin restrictions if applicable
+    if (department) {
+      if (session.role === 'ADMIN') {
+        // If Admin is filtering, they can only filter within their allowed departments
+        const allowedDepts = where.member?.department?.in || [];
+        if (allowedDepts.includes(department)) {
+          where.member = { department };
+        } else {
+          where.id = 'NONE';
+        }
+      } else {
+        where.member = { department };
+      }
+    }
+
     if (pjId) where.pjId = pjId;
 
     // If Pengurus, only get their own

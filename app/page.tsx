@@ -7,6 +7,7 @@ import { DashboardView } from '@/components/dashboard-view';
 import { MembersView } from '@/components/members-view';
 import { ReportsView } from '@/components/reports-view';
 import { SettingsView } from '@/components/settings-view';
+import { AdminUsersView } from '@/components/admin-users-view';
 import { ActivitiesView } from '@/components/activities-view';
 import { GovernanceView } from '@/components/governance-view';
 import { PointMutationView } from '@/components/point-mutation-view';
@@ -15,7 +16,11 @@ import { PermissionsView } from '@/components/permissions-view';
 import { UserProfileMenuPengurus } from '@/components/user-profile-menu-pengurus';
 import { NotificationBell } from '@/components/notification-bell';
 import { PengurusPelaporanView } from '@/components/pengurus-pelaporan-view';
+import { AdminClaimsView } from '@/components/admin-claims-view';
 import { getImageUrl } from '@/lib/utils';
+import { Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 
 export type TreatmentPath = 'REDEMPTION' | 'FULL_ATTENDANCE';
 
@@ -101,20 +106,20 @@ export const PURE_MATRIX: Record<ActivityScope, Record<AttendanceStatus, number>
 
 interface SessionUser {
   userId: string;
-  role: 'ADMIN' | 'PENGURUS';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'PENGURUS';
   name: string;
   memberId?: string;
   prn?: string;
 }
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'perizinan' | 'pelaporan'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'perizinan' | 'pelaporan' | 'claims' | 'admin_users'>('dashboard');
   
   // Sync tab with URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'pelaporan', 'perizinan'].includes(tab)) {
+    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'pelaporan', 'perizinan', 'claims', 'admin_users'].includes(tab)) {
       setActiveTab(tab as any);
     }
   }, []);
@@ -132,6 +137,7 @@ export default function DashboardPage() {
   const [session, setSession] = useState<SessionUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sysSettings, setSysSettings] = useState<any>(null);
 
   const handleLogout = async () => {
@@ -220,16 +226,28 @@ export default function DashboardPage() {
     }) as Member[];
   }, [members, activities, sysSettings]);
 
+  // Filter members based on role and PJ mapping
+  const visibleMembers = useMemo(() => {
+    if (session?.role === 'ADMIN') {
+      const mapping = sysSettings?.PJ_MAPPING ? JSON.parse(sysSettings.PJ_MAPPING) : {};
+      const myDepts = Object.entries(mapping)
+        .filter(([_, uid]) => uid === session.userId)
+        .map(([dept]) => dept);
+      return derivedMembers.filter(m => myDepts.includes(m.department));
+    }
+    return derivedMembers;
+  }, [derivedMembers, session, sysSettings]);
+
   // Filter members based on search query
   const filteredMembers = useMemo(() => {
-    if (!searchQuery.trim()) return derivedMembers;
+    if (!searchQuery.trim()) return visibleMembers;
     const query = searchQuery.toLowerCase();
-    return derivedMembers.filter(
+    return visibleMembers.filter(
       (m) =>
         m.name.toLowerCase().includes(query) ||
         m.prn.toLowerCase().includes(query)
     );
-  }, [derivedMembers, searchQuery]);
+  }, [visibleMembers, searchQuery]);
 
   const handleAddMember = async (data: { name: string; prn: string; department: string; status: 'AKTIF' | 'ALUMNI' | 'NONAKTIF'; position: string; basePoints?: number }) => {
     const res = await fetch('/api/members', {
@@ -384,7 +402,7 @@ export default function DashboardPage() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView members={derivedMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
+        return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;
       case 'members':
         return (
           <MembersView
@@ -404,7 +422,7 @@ export default function DashboardPage() {
         return (
           <ActivitiesView
             activities={activities}
-            members={derivedMembers}
+            members={visibleMembers}
             onAddActivity={handleAddActivity}
             onUpdateActivity={handleUpdateActivity}
             onDeleteActivity={handleDeleteActivity}
@@ -412,9 +430,10 @@ export default function DashboardPage() {
           />
         );
       case 'governance':
+        if (session?.role !== 'SUPER_ADMIN') return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
         return (
           <GovernanceView
-            members={derivedMembers}
+            members={visibleMembers}
             onStartTreatment={handleStartTreatment}
             sysSettings={sysSettings}
           />
@@ -422,12 +441,16 @@ export default function DashboardPage() {
       case 'evaluasi':
         return (
           <PointMutationView
-            members={derivedMembers}
+            members={visibleMembers}
             onRefresh={fetchData}
           />
         );
       case 'perizinan':
-        return <PermissionsView sysSettings={sysSettings} />;
+        return <PermissionsView sysSettings={sysSettings} userRole={session?.role} userId={session?.userId} />;
+      case 'claims':
+        return <AdminClaimsView userRole={session?.role} userId={session?.userId} />;
+      case 'admin_users':
+        return <AdminUsersView />;
       default:
         return <DashboardView members={derivedMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
     }
@@ -454,15 +477,62 @@ export default function DashboardPage() {
           {/* Header khusus Pengurus */}
           <header className="bg-white border-b border-slate-200 px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
-                  {sysSettings?.APP_LOGO ? (
-                    <img src={getImageUrl(sysSettings.APP_LOGO) || ''} alt="Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-white text-xs font-bold">{sysSettings?.APP_NAME?.[0] || 'P'}</span>
-                  )}
+              <div className="flex items-center gap-2 md:gap-3">
+                {/* Mobile Menu */}
+                <div className="md:hidden">
+                  <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-slate-600 -ml-2">
+                        <Menu className="w-6 h-6" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px] p-0">
+                      <SheetHeader className="p-6 border-b text-left">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
+                            {sysSettings?.APP_LOGO ? (
+                              <img src={getImageUrl(sysSettings.APP_LOGO) || ''} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-white text-xs font-bold">{sysSettings?.APP_NAME?.[0] || 'P'}</span>
+                            )}
+                          </div>
+                          <SheetTitle className="text-sm font-semibold text-slate-700">{sysSettings?.APP_NAME || 'PSDM System'}</SheetTitle>
+                        </div>
+                      </SheetHeader>
+                      <div className="flex flex-col py-4">
+                        <button 
+                          onClick={() => { 
+                            handleTabChange('dashboard');
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className={`px-6 py-3 text-left text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                        >
+                          Profil & Dashboard
+                        </button>
+                        <button 
+                          onClick={() => { 
+                            handleTabChange('pelaporan');
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className={`px-6 py-3 text-left text-sm font-medium transition-colors ${activeTab === 'pelaporan' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                        >
+                          Pelaporan Klaim
+                        </button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
                 </div>
-                <span className="text-sm font-semibold text-slate-700">{sysSettings?.APP_NAME || 'PSDM System'}</span>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center overflow-hidden">
+                    {sysSettings?.APP_LOGO ? (
+                      <img src={getImageUrl(sysSettings.APP_LOGO) || ''} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white text-xs font-bold">{sysSettings?.APP_NAME?.[0] || 'P'}</span>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">{sysSettings?.APP_NAME || 'PSDM System'}</span>
+                </div>
               </div>
               
               <div className="hidden md:flex items-center gap-6 mx-8">
@@ -528,6 +598,7 @@ export default function DashboardPage() {
         appLogo={sysSettings?.APP_LOGO}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        userRole={session?.role}
       />
       <div className="flex-1 flex flex-col overflow-hidden w-full">
         <DashboardHeader

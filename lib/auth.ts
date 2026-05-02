@@ -7,7 +7,7 @@ const JWT_SECRET = new TextEncoder().encode(
 
 export interface SessionPayload {
   userId: string;
-  role: 'ADMIN' | 'PENGURUS';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'PENGURUS';
   name: string;
   memberId?: string;
   prn?: string;

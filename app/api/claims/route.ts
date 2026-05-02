@@ -6,8 +6,7 @@ import { verifyToken } from '@/lib/auth';
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { category, subCategory, description, evidence, claimedPoints } = data;
-
+    const { activityName, activityDate, description, evidence } = data;
     const cookieStore = await cookies();
     const token = cookieStore.get('session')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -19,29 +18,27 @@ export async function POST(request: Request) {
     if (!evidence) {
       return NextResponse.json({ error: 'Bukti wajib dilampirkan' }, { status: 400 });
     }
-
     const claim = await prisma.pointClaim.create({
       data: {
         memberId,
-        category,
-        subCategory,
+        activityName,
+        activityDate,
         description,
         evidence,
-        claimedPoints,
         status: 'PENDING'
-      }
+      } as any
     });
 
     // Create notification for admin
-    const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+    const admins = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } });
     if (admins.length > 0) {
       for (const admin of admins) {
         await prisma.notification.create({
           data: {
             userId: admin.id,
             title: 'Pengajuan Klaim Baru',
-            message: `${session.name} mengajukan klaim prestasi: ${subCategory}`,
-            link: '/?tab=evaluasi'
+            message: `${session.name} mengajukan klaim kegiatan: ${activityName}`,
+            link: '/?tab=claims'
           }
         });
       }
@@ -60,7 +57,7 @@ export async function GET(request: Request) {
     const token = cookieStore.get('session')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const session = await verifyToken(token);
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'PENGURUS')) {
+    if (!session || !['SUPER_ADMIN', 'ADMIN', 'PENGURUS'].includes(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -68,6 +65,22 @@ export async function GET(request: Request) {
     const statusParam = url.searchParams.get('status');
 
     const where: any = {};
+    
+    // For standard ADMIN, restrict to their CURRENTLY assigned departments in PJ_MAPPING
+    if (session.role === 'ADMIN') {
+      const setting = await prisma.systemSetting.findUnique({ where: { key: 'PJ_MAPPING' } });
+      if (setting && setting.value) {
+        const mapping = JSON.parse(setting.value);
+        const myDepts = Object.entries(mapping)
+          .filter(([_, uid]) => uid === session.userId)
+          .map(([dept]) => dept);
+        
+        where.member = { department: { in: myDepts } };
+      } else {
+        where.id = 'NONE';
+      }
+    }
+
     if (statusParam) {
       where.status = statusParam;
     }

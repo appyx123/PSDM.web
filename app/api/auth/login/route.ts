@@ -9,9 +9,12 @@ export async function POST(request: Request) {
     let user;
 
     if (email) {
-      // Admin login flow
+      // Admin login flow (Super Admin or Admin)
       user = await prisma.user.findFirst({
-        where: { email: email.toLowerCase(), role: 'ADMIN' }
+        where: { 
+          email: email.toLowerCase(), 
+          role: { in: ['SUPER_ADMIN', 'ADMIN'] } 
+        }
       });
       if (!user) {
         return NextResponse.json({ error: 'Email atau password salah.' }, { status: 401 });
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
 
     const token = await signToken({
       userId: user.id,
-      role: user.role as 'ADMIN' | 'PENGURUS',
+      role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'PENGURUS',
       name: user.name,
       memberId: user.memberId || undefined,
       prn: user.prn || undefined,

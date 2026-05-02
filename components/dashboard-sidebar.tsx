@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, Star, X, FileText } from 'lucide-react';
+import { Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, Star, X, FileText, CheckCircle2, Shield } from 'lucide-react';
 import { cn, getImageUrl } from '@/lib/utils';
 
 interface DashboardSidebarProps {
@@ -10,6 +10,7 @@ interface DashboardSidebarProps {
   appLogo?: string;
   isOpen?: boolean;
   onClose?: () => void;
+  userRole?: string;
 }
 
 export function DashboardSidebar({ 
@@ -18,18 +19,24 @@ export function DashboardSidebar({
   appName = 'Admin',
   appLogo,
   isOpen = false,
-  onClose
+  onClose,
+  userRole = 'PENGURUS'
 }: DashboardSidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'members', label: 'Members', icon: Users },
     { id: 'activities', label: 'Kegiatan', icon: CalendarDays },
-    { id: 'governance', label: 'Tata Kelola', icon: ShieldAlert },
     { id: 'evaluasi', label: 'Evaluasi & Apresiasi', icon: Star },
     { id: 'perizinan', label: 'Perizinan', icon: FileText },
+    { id: 'claims', label: 'Verifikasi Klaim', icon: CheckCircle2 },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  if (userRole === 'SUPER_ADMIN') {
+    menuItems.splice(3, 0, { id: 'governance', label: 'Tata Kelola', icon: ShieldAlert });
+    menuItems.push({ id: 'admin_users', label: 'Kelola Admin', icon: Shield });
+  }
 
   return (
     <>

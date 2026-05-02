@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Member } from '@/app/page';
 import { FormKlaimPrestasi } from './form-klaim-prestasi';
-import { PlusCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { PlusCircle, ExternalLink, Loader2, Calendar, AlertCircle } from 'lucide-react';
+import { EvidencePreview } from './evidence-preview';
 
 interface PengurusPelaporanViewProps {
   member: Member;
@@ -16,6 +17,7 @@ export function PengurusPelaporanView({ member }: PengurusPelaporanViewProps) {
   const [claims, setClaims] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const fetchClaims = async () => {
     setIsLoading(true);
@@ -42,13 +44,13 @@ export function PengurusPelaporanView({ member }: PengurusPelaporanViewProps) {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Pelaporan Klaim Prestasi</h1>
-          <p className="text-slate-500 text-sm mt-1">Ajukan dan pantau status klaim poin reward Anda.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Pelaporan Kegiatan Positif</h1>
+          <p className="text-slate-500 text-sm mt-1">Laporkan kegiatan atau prestasi Anda untuk mendapatkan apresiasi poin.</p>
         </div>
         {!showForm && (
-          <Button onClick={() => setShowForm(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => setShowForm(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
             <PlusCircle className="w-4 h-4 mr-2" />
-            Buat Klaim Baru
+            Buat Laporan Baru
           </Button>
         )}
       </div>
@@ -58,10 +60,10 @@ export function PengurusPelaporanView({ member }: PengurusPelaporanViewProps) {
           <FormKlaimPrestasi member={member} onSuccess={handleSuccess} onCancel={() => setShowForm(false)} />
         </div>
       ) : (
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">Riwayat Pengajuan</CardTitle>
-            <CardDescription>Daftar klaim yang pernah Anda ajukan beserta statusnya.</CardDescription>
+            <CardDescription>Daftar kegiatan yang pernah Anda laporkan beserta status verifikasinya.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -69,46 +71,87 @@ export function PengurusPelaporanView({ member }: PengurusPelaporanViewProps) {
                 <Loader2 className="w-6 h-6 animate-spin" />
               </div>
             ) : claims.length === 0 ? (
-              <div className="text-center py-12 border border-dashed rounded-lg bg-slate-50">
-                <p className="text-slate-500">Belum ada pengajuan klaim.</p>
+              <div className="text-center py-12 border border-dashed rounded-lg bg-slate-50/50">
+                <p className="text-slate-500">Belum ada laporan kegiatan.</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {claims.map((claim) => (
-                  <div key={claim.id} className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <Badge variant="outline" className="mb-2 text-indigo-700 border-indigo-200 bg-indigo-50">
-                          {claim.category}
-                        </Badge>
-                        <h4 className="font-bold text-slate-800">{claim.subCategory} <span className="text-green-600 ml-1">(+{claim.claimedPoints})</span></h4>
-                        <p className="text-sm text-slate-600 mt-1">{claim.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={
-                          claim.status === 'APPROVED' ? 'bg-green-100 text-green-800 border-green-200' :
-                          claim.status === 'REJECTED' ? 'bg-red-100 text-red-800 border-red-200' :
-                          'bg-yellow-100 text-yellow-800 border-yellow-200'
-                        } variant="outline">
-                          {claim.status === 'APPROVED' ? 'Disetujui' : claim.status === 'REJECTED' ? 'Ditolak' : 'Menunggu Verifikasi'}
-                        </Badge>
-                        <p className="text-xs text-slate-400 mt-2">
-                          {new Date(claim.createdAt).toLocaleDateString('id-ID')}
-                        </p>
+                  <div key={claim.id} className="group p-5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-200">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                      <div className="flex-1 w-full space-y-4">
+                        {/* Header Section */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1.5">
+                            <h4 className="font-bold text-slate-900 text-lg group-hover:text-indigo-700 transition-colors leading-tight">
+                              {claim.activityName}
+                            </h4>
+                            <div className="flex items-center gap-3 text-slate-500 text-xs font-medium">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                                <span>{new Date(claim.activityDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                              </div>
+                              <div className="w-1 h-1 rounded-full bg-slate-300" />
+                              <span>Diajukan {new Date(claim.createdAt).toLocaleDateString('id-ID')}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 shrink-0">
+                            {claim.status === 'APPROVED' && claim.pointsAwarded !== null && (
+                              <Badge className="bg-green-600 text-white font-bold px-2.5 py-0.5">
+                                +{claim.pointsAwarded} Poin
+                              </Badge>
+                            )}
+                            <Badge className={
+                              claim.status === 'APPROVED' ? 'bg-green-50 text-green-700 border-green-200' :
+                              claim.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' :
+                              'bg-amber-50 text-amber-700 border-amber-200'
+                            } variant="outline">
+                              {claim.status === 'APPROVED' ? 'Disetujui' : claim.status === 'REJECTED' ? 'Ditolak' : 'Menunggu Verifikasi'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Description Box */}
+                        <div className="relative bg-slate-50/80 p-4 rounded-xl border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                          <p className="text-sm text-slate-600 leading-relaxed">
+                            {claim.description}
+                          </p>
+                        </div>
+                        
+                        {/* Footer / Documentation Link */}
+                        <div className="flex items-center justify-between pt-1">
+                          {claim.evidence ? (
+                            <button 
+                              onClick={() => setPreviewUrl(claim.evidence)}
+                              className="text-xs text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1.5 bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-all active:scale-95"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              Lihat Dokumentasi
+                            </button>
+                          ) : (
+                            <div />
+                          )}
+                          
+                          {claim.verifiedAt && (
+                            <span className="text-[10px] text-slate-400 italic">
+                              Diverifikasi pada {new Date(claim.verifiedAt).toLocaleDateString('id-ID')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {claim.evidence && (
-                      <div className="mt-3 text-sm">
-                        <a href={claim.evidence} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1 inline-flex">
-                          <ExternalLink className="w-3 h-3" />
-                          Lihat Bukti Lampiran
-                        </a>
-                      </div>
-                    )}
+
+                    {/* Rejection Reason Alert */}
                     {claim.status === 'REJECTED' && claim.rejectionReason && (
-                      <div className="mt-3 p-3 bg-red-50 text-red-800 text-sm rounded-md border border-red-100">
-                        <span className="font-semibold">Alasan Penolakan: </span>
-                        {claim.rejectionReason}
+                      <div className="mt-4 p-4 bg-red-50/50 text-red-800 text-xs rounded-xl border border-red-100 flex gap-3 items-center">
+                        <div className="w-8 h-8 rounded-lg bg-red-100/50 flex items-center justify-center shrink-0 border border-red-200/50">
+                          <AlertCircle className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-bold text-red-900 block mb-0.5 uppercase tracking-wider text-[10px]">Alasan Penolakan</span>
+                          <p className="leading-relaxed opacity-90">{claim.rejectionReason}</p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -118,6 +161,11 @@ export function PengurusPelaporanView({ member }: PengurusPelaporanViewProps) {
           </CardContent>
         </Card>
       )}
+      <EvidencePreview 
+        url={previewUrl || ''} 
+        isOpen={!!previewUrl} 
+        onClose={() => setPreviewUrl(null)} 
+      />
     </div>
   );
 }

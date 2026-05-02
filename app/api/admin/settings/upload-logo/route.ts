@@ -9,7 +9,7 @@ async function getAdminSession() {
   const token = cookieStore.get('session')?.value;
   if (!token) return null;
   const payload = await verifyToken(token);
-  if (!payload || payload.role !== 'ADMIN') return null;
+  if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPER_ADMIN')) return null;
   return payload;
 }
 

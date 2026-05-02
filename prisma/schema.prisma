@@ -50,7 +50,7 @@ model SPLog {
 
 model User {
   id        String   @id @default(cuid())
-  role      String   // "ADMIN" or "PENGURUS"
+  role      String   @default("PENGURUS") // SUPER_ADMIN, ADMIN, PENGURUS
   email     String?  @unique
   prn       String?  @unique
   name      String
@@ -76,10 +76,20 @@ model User {
   member    Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
   
   audits              SettingsAudit[]
+  auditLogs           AuditLog[]
   pjPermissions       Permission[] @relation("PJRelation")
   verifiedPermissions Permission[] @relation("VerifierRelation")
   verifiedClaims      PointClaim[] @relation("ClaimVerifierRelation")
   notifications       Notification[]
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
 }
 
 model SystemSetting {
@@ -182,12 +192,12 @@ model Notification {
 model PointClaim {
   id               String    @id @default(cuid())
   memberId         String
-  category         String
-  subCategory      String
+  activityName     String
+  activityDate     String
   description      String
   evidence         String
-  claimedPoints    Int
   status           String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  pointsAwarded    Int?
   verifiedById     String?
   verifiedAt       DateTime?
   rejectionReason  String?
