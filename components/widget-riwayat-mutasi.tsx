@@ -64,7 +64,7 @@ export function WidgetRiwayatMutasi({ member }: WidgetRiwayatMutasiProps) {
                   </div>
                   <h4 className="font-semibold text-sm text-slate-800">{mut.subCategory}</h4>
                   {mut.description && mut.description !== '-' && (
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2" title={mut.description}>{mut.description}</p>
+                    <p className="text-xs text-slate-500 mt-1 whitespace-pre-wrap" title={mut.description}>{mut.description.replace(/^(Klaim:|Dari Klaim:)\s*/i, '')}</p>
                   )}
                 </div>
                 <div className={`font-bold text-sm whitespace-nowrap mt-1 ${mut.type === 'REWARD' ? 'text-green-600' : 'text-red-600'}`}>

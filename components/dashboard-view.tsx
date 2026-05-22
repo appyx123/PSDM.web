@@ -23,6 +23,13 @@ export function DashboardView({ members, searchQuery = '', filteredMembers = [],
   const [recentPermissions, setRecentPermissions] = useState<any[]>([]);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  
+  const typeLabels: Record<string, string> = {
+    'sick': 'Sakit',
+    'academic': 'Akademik',
+    'emergency': 'Darurat',
+    'late': 'Terlambat'
+  };
 
   useEffect(() => {
     const fetchRecentData = async () => {
@@ -143,7 +150,9 @@ export function DashboardView({ members, searchQuery = '', filteredMembers = [],
                   <div key={p.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="font-bold text-slate-900 leading-none">{p.member.name}</p>
-                      <p className="text-xs text-slate-500 font-medium">{p.activity.name} • <span className="capitalize">{p.type}</span></p>
+                      <p className="text-xs text-slate-500 font-medium">{p.activity.name} • <span>{
+                        typeLabels[p.type.toLowerCase()] || p.type
+                      }</span></p>
                     </div>
                     <Badge className={p.status.includes('emergency') ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}>
                       {p.status.includes('emergency') ? 'Urgent' : 'Reguler'}
@@ -182,10 +191,15 @@ export function DashboardView({ members, searchQuery = '', filteredMembers = [],
                   <div key={log.id} className="p-4 flex items-center justify-between">
                     <div>
                       <p className="font-bold text-slate-900 leading-none">{log.member.name}</p>
-                      <p className="text-xs text-slate-500 font-medium mt-1">{log.category}: {log.description}</p>
+                      <p className="text-xs text-slate-500 font-medium mt-1">
+                        {log.category}
+                        {log.description && log.description !== '-' && (
+                          <span className="text-slate-400 font-normal"> • {log.description.replace(/^(Klaim:|Dari Klaim:)\s*/i, '')}</span>
+                        )}
+                      </p>
                     </div>
-                    <div className={`font-bold text-sm ${log.type === 'REWARD' ? 'text-green-600' : 'text-red-600'}`}>
-                      {log.type === 'REWARD' ? '+' : '-'}{log.points}
+                    <div className={`font-bold text-sm ${log.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {log.points > 0 ? `+${log.points}` : log.points}
                     </div>
                   </div>
                 ))}

@@ -92,6 +92,9 @@ export function AttendanceModal({
                   <Dialog.Title className="text-xl font-bold text-slate-900">
                     Presensi: {activity.name}
                   </Dialog.Title>
+                  <Dialog.Description className="sr-only">
+                    Manajemen presensi kehadiran anggota untuk kegiatan {activity.name}.
+                  </Dialog.Description>
                   <p className="text-sm text-slate-500 mt-1">
                     Tanggal: {new Date(activity.date).toLocaleDateString('id-ID', { dateStyle: 'long' })}
                   </p>
@@ -231,6 +234,9 @@ export function AttendanceModal({
               <AlertCircle className="w-5 h-5 text-indigo-600" />
               Alasan Izin / Sakit
             </Dialog.Title>
+            <Dialog.Description className="sr-only">
+              Berikan alasan detail untuk izin atau sakit anggota.
+            </Dialog.Description>
             
             <div className="mt-4 space-y-4">
               <p className="text-sm text-slate-600">

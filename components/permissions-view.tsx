@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, CheckCircle, XCircle, AlertTriangle, AlertCircle, Loader2, ShieldAlert } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, AlertTriangle, AlertCircle, Loader2, ShieldAlert, Maximize2 } from 'lucide-react';
 import { Member } from '@/app/page';
+import { getImageUrl } from '@/lib/utils';
 
 interface PermissionsViewProps {
   sysSettings?: any;
@@ -23,6 +24,13 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
   const [activeTab, setActiveTab] = useState('masuk');
   const [permissions, setPermissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const typeLabels: Record<string, string> = {
+    'sick': 'Sakit',
+    'academic': 'Akademik',
+    'emergency': 'Darurat',
+    'late': 'Terlambat'
+  };
   
   // Modals state
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -207,7 +215,9 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
                           <div className="text-xs text-slate-500">{new Date(p.activity.date).toLocaleDateString('id-ID')}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="capitalize font-medium mb-1">{p.type}</div>
+                          <div className="font-medium mb-1">{
+                            typeLabels[p.type.toLowerCase()] || p.type
+                          }</div>
                           {p.status === 'emergency_pending' && <Badge className="bg-amber-100 text-amber-800"><AlertTriangle className="w-3 h-3 mr-1"/> Darurat H-3 Jam</Badge>}
                           {p.status === 'emergency_quota_full' && <Badge className="bg-orange-100 text-orange-800"><AlertCircle className="w-3 h-3 mr-1"/> Kuota Penuh ({'>'}7)</Badge>}
                           {p.status === 'pending' && <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">Reguler</Badge>}
@@ -314,6 +324,7 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
         <DialogContent>
           <DialogHeader>
              <DialogTitle>Verifikasi Izin</DialogTitle>
+             <DialogDescription>Tinjau alasan dan bukti pengajuan izin sebelum memberikan keputusan.</DialogDescription>
           </DialogHeader>
           {selectedItem && (
             <div className="space-y-4">
@@ -321,7 +332,33 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
                  <p><strong>Nama:</strong> {selectedItem.member.name}</p>
                  <p><strong>Kegiatan:</strong> {selectedItem.activity.name}</p>
                  <p><strong>Alasan:</strong> {selectedItem.reason}</p>
-                 {selectedItem.evidence && <p><strong>Bukti:</strong> <a href="#" className="text-indigo-600 underline">{selectedItem.evidence}</a></p>}
+                 {selectedItem.evidence && (
+                   <div className="mt-3">
+                     <p className="font-bold mb-1">Bukti Dokumentasi:</p>
+                     {selectedItem.evidence.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
+                       <div className="relative group rounded-lg overflow-hidden border bg-white shadow-sm max-h-[300px] overflow-y-auto">
+                         <img 
+                           src={getImageUrl(selectedItem.evidence) || ''} 
+                           alt="Evidence Preview" 
+                           className="w-full object-contain cursor-pointer hover:scale-[1.02] transition-transform" 
+                           onClick={() => window.open(getImageUrl(selectedItem.evidence) || '', '_blank')}
+                           onError={(e) => {
+                             (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Bukti+Tidak+Ditemukan';
+                           }}
+                         />
+                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full" onClick={() => window.open(getImageUrl(selectedItem.evidence) || '', '_blank')}>
+                             <Maximize2 className="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </div>
+                     ) : (
+                       <a href={getImageUrl(selectedItem.evidence) || '#'} target="_blank" className="text-indigo-600 underline flex items-center gap-1">
+                         <FileText className="h-4 w-4" /> {selectedItem.evidence}
+                       </a>
+                     )}
+                   </div>
+                 )}
                </div>
                
                <div className="space-y-2">
@@ -355,6 +392,7 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
         <DialogContent>
           <DialogHeader>
              <DialogTitle className="text-red-600">Batalkan Izin Disetujui</DialogTitle>
+             <DialogDescription>Membatalkan izin akan mengatur ulang status kehadiran pengurus.</DialogDescription>
           </DialogHeader>
           {selectedItem && (
             <div className="space-y-4">

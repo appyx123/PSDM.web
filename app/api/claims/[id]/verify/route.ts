@@ -7,7 +7,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
   try {
     const { id } = await context.params;
     const data = await request.json();
-    const { status, rejectionReason } = data; // status: APPROVED or REJECTED
+    const { status, points, rejectionReason } = data; // status: APPROVED or REJECTED
 
     const cookieStore = await cookies();
     const token = cookieStore.get('session')?.value;
@@ -29,6 +29,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
       where: { id },
       data: {
         status,
+        pointsAwarded: status === 'APPROVED' ? Number(points) : null,
         rejectionReason: status === 'REJECTED' ? rejectionReason : null,
         verifiedById: adminId,
         verifiedAt: new Date()
@@ -43,9 +44,9 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     if (userToNotify) {
         let message = '';
         if (status === 'APPROVED') {
-            message = `Klaim Anda untuk "${claim.subCategory}" telah disetujui. (+${claim.claimedPoints} Poin)`;
+            message = `Klaim Anda untuk "${claim.activityName}" telah disetujui. (+${points} Poin)`;
         } else {
-            message = `Klaim Anda untuk "${claim.subCategory}" ditolak. Alasan: ${rejectionReason}`;
+            message = `Klaim Anda untuk "${claim.activityName}" ditolak. Alasan: ${rejectionReason}`;
         }
 
         await prisma.notification.create({
@@ -65,9 +66,9 @@ export async function PATCH(request: Request, context: { params: { id: string } 
         data: {
           memberId: claim.memberId,
           type: 'REWARD',
-          category: claim.subCategory,
-          points: claim.claimedPoints,
-          description: `Dari Klaim Prestasi: ${claim.description}`
+          category: 'Klaim Prestasi',
+          points: Number(points),
+          description: claim.activityName
         }
       });
     }

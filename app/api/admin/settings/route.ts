@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 import { getSettings, updateSetting } from '@/lib/settings';
 import { SettingKey } from '@/lib/defaultSettings';
+import prisma from '@/lib/prisma';
+
 
 async function getAdminSession() {
   const cookieStore = await cookies();

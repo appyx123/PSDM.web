@@ -108,6 +108,7 @@ interface SessionUser {
   userId: string;
   role: 'SUPER_ADMIN' | 'ADMIN' | 'PENGURUS';
   name: string;
+  email?: string;
   memberId?: string;
   prn?: string;
 }
@@ -603,7 +604,7 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col overflow-hidden w-full">
         <DashboardHeader
           userName={session?.name || 'Admin'}
-          userEmail="admin@psdm.id"
+          userEmail={session?.email || ''}
           userRole={session?.role}
           onSearch={setSearchQuery}
           searchResultCount={filteredMembers.length}

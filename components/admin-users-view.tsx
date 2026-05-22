@@ -264,8 +264,8 @@ export function AdminUsersView() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">ADMIN (Staf/Operations)</SelectItem>
-                      <SelectItem value="SUPER_ADMIN">SUPER ADMIN (Kadep/Full Access)</SelectItem>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="SUPER_ADMIN">SUPER ADMIN</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-[10px] text-slate-500 italic mt-1 leading-relaxed">

@@ -108,17 +108,27 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
 
   const handleVerifyClaim = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     let rejectionReason = '';
+    let points = 0;
+
     if (status === 'REJECTED') {
       const reason = prompt('Alasan penolakan:');
       if (reason === null) return;
       rejectionReason = reason;
+    } else if (status === 'APPROVED') {
+      const p = prompt('Jumlah poin apresiasi:');
+      if (p === null) return;
+      points = parseInt(p);
+      if (isNaN(points)) {
+        alert('Masukkan angka yang valid');
+        return;
+      }
     }
 
     try {
       const res = await fetch(`/api/claims/${id}/verify`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, rejectionReason })
+        body: JSON.stringify({ status, points, rejectionReason })
       });
 
       if (res.ok) {
@@ -402,8 +412,8 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
                               <span className="text-sm font-medium">{log.category}</span>
                             </div>
                             {log.description !== '-' && (
-                              <div className="text-xs text-slate-500 mt-1 max-w-[200px] truncate" title={log.description}>
-                                Catatan: {log.description}
+                              <div className="text-xs text-slate-500 mt-1 whitespace-pre-wrap" title={log.description}>
+                                {log.description.replace(/^(Klaim:|Dari Klaim:)\s*/i, '')}
                               </div>
                             )}
                           </TableCell>
