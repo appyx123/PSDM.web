@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, AlertCircle, FileText, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { CalendarDays, AlertCircle, FileText, CheckCircle2, XCircle, Clock, Pencil, Trash2 } from 'lucide-react';
 import { FormPengajuanIzin } from './form-pengajuan-izin';
 import { Member, Activity } from '@/app/page';
 
@@ -16,6 +16,7 @@ export function WidgetIzinSaya({ member }: WidgetIzinSayaProps) {
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedPermission, setSelectedPermission] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchDashboardData = async () => {
@@ -35,8 +36,32 @@ export function WidgetIzinSaya({ member }: WidgetIzinSayaProps) {
   }, []);
 
   const handleAjukanIzin = (activity: Activity) => {
+    setSelectedPermission(null);
     setSelectedActivity(activity);
     setIsModalOpen(true);
+  };
+
+  const handleEditIzin = (permission: any, activity: Activity) => {
+    setSelectedPermission(permission);
+    setSelectedActivity(activity);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteIzin = async (permissionId: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus pengajuan izin ini?')) return;
+    try {
+      const res = await fetch(`/api/permissions/${permissionId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchDashboardData();
+      } else {
+        const err = await res.json();
+        alert(`Gagal menghapus izin: ${err.error}`);
+      }
+    } catch (e) {
+      alert('Terjadi kesalahan koneksi.');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -132,6 +157,7 @@ export function WidgetIzinSaya({ member }: WidgetIzinSayaProps) {
               {data.map((item, idx) => {
                 const eventDate = new Date(`${item.activity.date.split('T')[0]}T${item.activity.time || '00:00'}:00`);
                 const isPast = new Date() > eventDate;
+                const isPending = item.permission && ['pending', 'emergency_pending', 'emergency_quota_full'].includes(item.permission.status);
                 
                 return (
                   <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
@@ -145,9 +171,33 @@ export function WidgetIzinSaya({ member }: WidgetIzinSayaProps) {
                         <p className="text-[10px] text-red-600 mt-1 italic">Alasan tolak: {item.permission.cancellationReason}</p>
                       )}
                     </div>
-                    <div>
+                    <div className="flex flex-col items-end gap-1.5">
                       {item.permission ? (
-                        getStatusBadge(item.permission.status)
+                        <>
+                          {getStatusBadge(item.permission.status)}
+                          {isPending && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Button 
+                                size="icon"
+                                variant="ghost" 
+                                className="h-7 w-7 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md"
+                                title="Edit Izin"
+                                onClick={() => handleEditIzin(item.permission, item.activity)}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button 
+                                size="icon"
+                                variant="ghost" 
+                                className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
+                                title="Hapus Izin"
+                                onClick={() => handleDeleteIzin(item.permission.id)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       ) : isPast ? (
                         <Badge variant="outline" className="text-slate-500 bg-slate-50">Selesai</Badge>
                       ) : (
@@ -174,6 +224,7 @@ export function WidgetIzinSaya({ member }: WidgetIzinSayaProps) {
         onOpenChange={setIsModalOpen}
         member={member}
         activity={selectedActivity}
+        permission={selectedPermission}
         onSuccess={fetchDashboardData}
       />
     </>

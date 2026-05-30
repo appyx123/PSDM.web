@@ -177,7 +177,6 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
         <TabsList className="bg-white border p-1 rounded-lg">
           <TabsTrigger value="masuk">Pengajuan Masuk</TabsTrigger>
           <TabsTrigger value="riwayat">Riwayat</TabsTrigger>
-          {userRole === 'SUPER_ADMIN' && <TabsTrigger value="pj">Pengaturan PJ</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="masuk" className="mt-4">
@@ -289,34 +288,7 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
           </Card>
         </TabsContent>
 
-        {userRole === 'SUPER_ADMIN' && (
-          <TabsContent value="pj" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mapping PJ Perizinan</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {departments.map(dept => (
-                    <div key={dept} className="p-4 border rounded-xl space-y-2 bg-slate-50">
-                      <Label className="font-bold text-slate-700">{dept}</Label>
-                      <Select value={pjMapping[dept] || ''} onValueChange={(val) => handleSavePj(dept, val)}>
-                        <SelectTrigger className="bg-white">
-                           <SelectValue placeholder="Pilih Admin PJ..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {users.map(u => (
-                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
+
       </Tabs>
 
       {/* VERIFY MODAL */}

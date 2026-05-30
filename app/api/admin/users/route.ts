@@ -91,6 +91,20 @@ export async function DELETE(request: Request) {
 
     await prisma.user.delete({ where: { id } });
 
+    // Auto-cleanup: remove deleted admin from PJ_MAPPING to prevent stale FK references
+    const pjMapping = await prisma.systemSetting.findUnique({ where: { key: 'PJ_MAPPING' } });
+    if (pjMapping && pjMapping.value) {
+      const mapping = JSON.parse(pjMapping.value);
+      const cleaned: Record<string, string> = {};
+      for (const [dept, pjId] of Object.entries(mapping)) {
+        if (pjId !== id) cleaned[dept] = pjId as string;
+      }
+      await prisma.systemSetting.update({
+        where: { key: 'PJ_MAPPING' },
+        data: { value: JSON.stringify(cleaned) }
+      });
+    }
+
     await prisma.auditLog.create({
       data: {
         userId: session.userId,

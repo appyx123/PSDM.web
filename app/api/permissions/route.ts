@@ -45,12 +45,17 @@ export async function POST(request: Request) {
 
     // Assign PJ based on department
     const member = await prisma.member.findUnique({ where: { id: memberId } });
-    let pjId = null;
+    let pjId: string | null = null;
     if (member) {
       const setting = await prisma.systemSetting.findUnique({ where: { key: 'PJ_MAPPING' } });
       if (setting && setting.value) {
         const mapping = JSON.parse(setting.value);
-        pjId = mapping[member.department] || null;
+        const mappedPjId: string | null = mapping[member.department] || null;
+        if (mappedPjId) {
+          // Validate that the mapped PJ user still exists (guard against deleted admins)
+          const pjUser = await prisma.user.findUnique({ where: { id: mappedPjId }, select: { id: true } });
+          pjId = pjUser ? mappedPjId : null;
+        }
       }
     }
 

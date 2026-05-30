@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -17,14 +17,30 @@ interface FormPengajuanIzinProps {
   member: Member;
   activity: Activity | null;
   onSuccess: () => void;
+  permission?: any;
 }
 
-export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSuccess }: FormPengajuanIzinProps) {
+export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSuccess, permission }: FormPengajuanIzinProps) {
   const [type, setType] = useState('sick');
   const [reason, setReason] = useState('');
   const [isEmergency, setIsEmergency] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (permission) {
+        setType(permission.type || 'sick');
+        setReason(permission.reason || '');
+        setIsEmergency(permission.status === 'emergency_pending');
+      } else {
+        setType('sick');
+        setReason('');
+        setIsEmergency(false);
+      }
+      setFile(null);
+    }
+  }, [open, permission]);
 
   // Check if < 3 hours
   const isCloseToEvent = () => {
@@ -55,23 +71,33 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
       alert('Alasan wajib diisi.');
       return;
     }
-    if (isEmergencyRequired && !isEmergency) {
+    if (isEmergencyRequired && !isEmergency && !permission) {
       alert('Anda harus mencentang kotak Keadaan Darurat karena kegiatan segera dimulai.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Handle file upload here if needed (e.g. to /api/uploads), assuming returning a URL string.
-      // For simplicity, we just pass the file name or skip it if no upload server is configured.
-      let evidenceUrl = null;
+      // Upload evidence file first if provided
+      let evidenceUrl: string | null = permission?.evidence || null;
       if (file) {
-        // Implement your actual file upload logic here
-        evidenceUrl = file.name; // Dummy
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch('/api/uploads', { method: 'POST', body: formData });
+        if (!uploadRes.ok) {
+          alert('Gagal mengupload file bukti. Silakan coba lagi.');
+          setIsSubmitting(false);
+          return;
+        }
+        const uploadData = await uploadRes.json();
+        evidenceUrl = uploadData.url;
       }
 
-      const res = await fetch('/api/permissions', {
-        method: 'POST',
+      const url = permission ? `/api/permissions/${permission.id}` : '/api/permissions';
+      const method = permission ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityId: activity.id,
@@ -87,7 +113,7 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
         onOpenChange(false);
       } else {
         const err = await res.json();
-        alert(`Gagal mengajukan izin: ${err.error}`);
+        alert(`Gagal menyimpan izin: ${err.error}`);
       }
     } catch (error) {
       alert('Terjadi kesalahan sistem.');
@@ -110,10 +136,10 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-indigo-700">
-            <FileText className="w-5 h-5" /> Form Pengajuan Izin
+            <FileText className="w-5 h-5" /> {permission ? 'Edit Pengajuan Izin' : 'Form Pengajuan Izin'}
           </DialogTitle>
           <DialogDescription>
-            Isi formulir untuk mengajukan izin ketidakhadiran pada kegiatan.
+            {permission ? 'Ubah formulir izin ketidakhadiran Anda pada kegiatan.' : 'Isi formulir untuk mengajukan izin ketidakhadiran pada kegiatan.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -166,15 +192,20 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
               <span>Lampiran Bukti (Opsional)</span>
               <span className="text-[10px] text-slate-400">Max 2MB (PDF/JPG)</span>
             </Label>
+            {permission?.evidence && (
+              <p className="text-xs text-slate-500 italic mb-1">
+                Bukti saat ini: <span className="font-mono text-indigo-600">{permission.evidence.split('/').pop()}</span>
+              </p>
+            )}
             <div className="border border-dashed p-3 rounded-lg flex items-center justify-center bg-slate-50 hover:bg-slate-100 transition-colors">
               <input type="file" id="evidence" className="hidden" onChange={handleFileChange} />
               <label htmlFor="evidence" className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
-                <Upload className="w-4 h-4" /> {file ? file.name : 'Pilih file...'}
+                <Upload className="w-4 h-4" /> {file ? file.name : 'Pilih file baru...'}
               </label>
             </div>
           </div>
 
-          {isEmergencyRequired && (
+          {isEmergencyRequired && !permission && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3 mt-4">
               <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
@@ -198,7 +229,7 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Batal</Button>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Ajukan Izin
+              {permission ? 'Simpan Perubahan' : 'Ajukan Izin'}
             </Button>
           </DialogFooter>
         </form>
@@ -206,3 +237,4 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
     </Dialog>
   );
 }
+

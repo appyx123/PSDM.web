@@ -11,21 +11,25 @@ export async function GET(request: Request) {
   }
 
   // Security check: prevent directory traversal
-  const safeFileName = path.basename(fileName);
-  const filePath = path.join(process.cwd(), 'public', 'uploads', safeFileName);
+  const safeFileName = path.basename(decodeURIComponent(fileName));
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+
+  // Try decoded filename first, then URL-encoded variant
+  const filePath = path.join(uploadDir, safeFileName);
 
   try {
     const fileBuffer = await fs.readFile(filePath);
-    
+
     // Determine mime type based on extension
     const ext = path.extname(safeFileName).toLowerCase();
     let contentType = 'application/octet-stream';
-    
+
     if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
     else if (ext === '.png') contentType = 'image/png';
     else if (ext === '.gif') contentType = 'image/gif';
     else if (ext === '.webp') contentType = 'image/webp';
     else if (ext === '.svg') contentType = 'image/svg+xml';
+    else if (ext === '.pdf') contentType = 'application/pdf';
 
     return new NextResponse(fileBuffer, {
       headers: {
@@ -33,11 +37,18 @@ export async function GET(request: Request) {
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
-  } catch (error) {
-    console.error(`Error serving file ${safeFileName}:`, error);
+  } catch (error: any) {
+    if (error?.code === 'ENOENT') {
+      // File simply doesn't exist (e.g. stale DB reference or deleted file) — quiet 404
+      console.warn(`[uploads] File not found: ${safeFileName}`);
+    } else {
+      // Unexpected error (permissions, disk, etc.) — log in full
+      console.error(`[uploads] Error serving file ${safeFileName}:`, error);
+    }
     return new NextResponse('File not found', { status: 404 });
   }
 }
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();

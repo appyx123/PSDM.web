@@ -74,14 +74,15 @@ export async function PATCH(request: Request) {
     }
 
     if (email && email.trim()) {
+      const normalizedEmail = email.trim().toLowerCase();
       // Check if email already used by another user
       const existing = await prisma.user.findFirst({
-        where: { email: email.trim(), NOT: { id: payload.userId } }
+        where: { email: normalizedEmail, NOT: { id: payload.userId } }
       });
       if (existing) {
         return NextResponse.json({ error: 'Email sudah digunakan oleh akun lain.' }, { status: 400 });
       }
-      updateData.email = email.trim();
+      updateData.email = normalizedEmail;
     }
 
     if (newPassword) {
@@ -116,27 +117,23 @@ export async function PATCH(request: Request) {
       select: { id: true, name: true, email: true, role: true, memberId: true, prn: true, image: true }
     });
 
-    // Re-issue token with updated name if name changed
-    if (updateData.name) {
-      const newToken = await signToken({
-        userId: updatedUser.id,
-        role: updatedUser.role as any,
-        name: updatedUser.name,
-        memberId: updatedUser.memberId ?? undefined,
-        prn: updatedUser.prn ?? undefined,
-      });
-      const response = NextResponse.json({ success: true, user: updatedUser });
-      response.cookies.set('session', newToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 2, // 2 hours
-        path: '/',
-      });
-      return response;
-    }
-
-    return NextResponse.json({ success: true, user: updatedUser });
+    // Always re-issue token after any successful update to keep session fresh
+    const newToken = await signToken({
+      userId: updatedUser.id,
+      role: updatedUser.role as any,
+      name: updatedUser.name,
+      memberId: updatedUser.memberId ?? undefined,
+      prn: updatedUser.prn ?? undefined,
+    });
+    const response = NextResponse.json({ success: true, user: updatedUser });
+    response.cookies.set('session', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 2, // 2 hours
+      path: '/',
+    });
+    return response;
   } catch (error) {
     console.error('PATCH /api/auth/me error:', error);
     return NextResponse.json({ error: 'Terjadi kesalahan saat memperbarui profil.' }, { status: 500 });
