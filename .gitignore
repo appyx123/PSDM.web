@@ -39,6 +39,8 @@ out/
 
 # Dependencies
 node_modules/
+yarn.lock
+pnpm-lock.yaml
 
 # OS
 .DS_Store
