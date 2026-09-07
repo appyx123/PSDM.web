@@ -29,7 +29,44 @@ export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('session')?.value;
 
-  // Paths that require authorization
+  // 1. Web Pages Protection (Gatekeeper at front door before any HTML / JS is sent)
+  const isProtectedPage = 
+    pathname === '/' || 
+    pathname.startsWith('/admin') || 
+    pathname.startsWith('/pengurus-profile');
+
+  if (isProtectedPage) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    const session = await verifyToken(token);
+    if (!session) {
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('session');
+      return response;
+    }
+
+    // Role check for /admin/settings page
+    if (pathname.startsWith('/admin') && session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    return NextResponse.next();
+  }
+
+  // 2. Already logged in redirect from /login to /
+  if (pathname === '/login') {
+    if (token) {
+      const session = await verifyToken(token);
+      if (session) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // 3. Protected API Routes
   const protectedApiPaths = [
     '/api/admin',
     '/api/permissions',
@@ -37,7 +74,8 @@ export default async function middleware(request: NextRequest) {
     '/api/members',
     '/api/activities',
     '/api/point-logs',
-    '/api/users'
+    '/api/users',
+    '/api/pengurus'
   ];
 
   const isProtectedPath = protectedApiPaths.some(path => pathname.startsWith(path));
@@ -93,5 +131,11 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*'],
+  matcher: [
+    '/',
+    '/login',
+    '/admin/:path*',
+    '/pengurus-profile/:path*',
+    '/api/:path*',
+  ],
 };

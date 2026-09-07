@@ -181,18 +181,16 @@ export default function DashboardPage() {
       try {
         const meRes = await fetch('/api/auth/me');
         if (!meRes.ok) {
-          window.location.href = '/login';
+          window.location.replace('/login');
           return;
         }
         const me = await meRes.json();
         setSession(me);
-      } catch {
-        window.location.href = '/login';
-        return;
-      } finally {
         setAuthChecked(true);
+        await fetchData();
+      } catch {
+        window.location.replace('/login');
       }
-      await fetchData();
     };
     init();
   }, []);
@@ -496,13 +494,13 @@ export default function DashboardPage() {
     }
   };
 
-  // Auth loading state
-  if (!authChecked) {
+  // Auth loading state: strictly guard so dashboard never flickers
+  if (!authChecked || !session) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500 text-sm">Memeriksa sesi...</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+          <p className="text-slate-400 text-xs font-medium tracking-wide">Memverifikasi sesi...</p>
         </div>
       </div>
     );
@@ -629,44 +627,53 @@ export default function DashboardPage() {
   }
 
   // Admin full dashboard
-  return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <DashboardSidebar 
-        activeItem={activeTab} 
-        onItemClick={handleTabChange} 
-        appName={sysSettings?.APP_NAME}
-        appLogo={sysSettings?.APP_LOGO}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        userRole={session?.role}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden w-full">
-        <DashboardHeader
-          userName={session?.name || 'Admin'}
-          userEmail={session?.email || ''}
+  if (session?.role?.toUpperCase() === 'ADMIN' || session?.role?.toUpperCase() === 'SUPER_ADMIN') {
+    return (
+      <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <DashboardSidebar 
+          activeItem={activeTab} 
+          onItemClick={handleTabChange} 
+          appName={sysSettings?.APP_NAME}
+          appLogo={sysSettings?.APP_LOGO}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
           userRole={session?.role}
-          onSearch={setSearchQuery}
-          searchResultCount={filteredMembers.length}
-          totalCount={members.length}
-          showSearch={activeTab === 'members'}
-          onLogout={handleLogout}
-          onMenuClick={() => setIsSidebarOpen(true)}
         />
-        <main className="flex-1 overflow-auto bg-slate-50/50">
-          <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-64 text-slate-500">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                  <p className="text-sm font-medium">Memuat data...</p>
+        <div className="flex-1 flex flex-col overflow-hidden w-full">
+          <DashboardHeader
+            userName={session?.name || 'Admin'}
+            userEmail={session?.email || ''}
+            userRole={session?.role}
+            onSearch={setSearchQuery}
+            searchResultCount={filteredMembers.length}
+            totalCount={members.length}
+            showSearch={activeTab === 'members'}
+            onLogout={handleLogout}
+            onMenuClick={() => setIsSidebarOpen(true)}
+          />
+          <main className="flex-1 overflow-auto bg-slate-50/50">
+            <div className="p-4 md:p-6 max-w-[1600px] mx-auto w-full">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64 text-slate-500">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                    <p className="text-sm font-medium">Memuat data...</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              renderContent()
-            )}
-          </div>
-        </main>
+              ) : (
+                renderContent()
+              )}
+            </div>
+          </main>
+        </div>
       </div>
+    );
+  }
+
+  // Fallback neutral screen if role is unrecognized
+  return (
+    <div className="flex h-screen items-center justify-center bg-slate-50">
+      <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
     </div>
   );
 }
