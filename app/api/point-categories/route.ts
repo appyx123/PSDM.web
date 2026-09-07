@@ -9,8 +9,8 @@ export async function GET() {
     // Auto-seed if empty
     if (categories.length === 0) {
       const defaultCategories = [
-        ...SOP_PUNISHMENTS.map(p => ({ type: 'PUNISHMENT', label: p.label, value: p.value, points: p.points })),
-        ...SOP_REWARDS.map(r => ({ type: 'REWARD', label: r.label, value: r.value, points: r.points }))
+        ...SOP_PUNISHMENTS.map(p => ({ type: 'PUNISHMENT', name: p.label, points: p.points })),
+        ...SOP_REWARDS.map(r => ({ type: 'REWARD', name: r.label, points: r.points }))
       ];
       
       await prisma.pointCategory.createMany({
@@ -34,9 +34,8 @@ export async function POST(request: Request) {
     const newCategory = await prisma.pointCategory.create({
       data: {
         type: data.type,
-        label: data.label,
-        value: data.label, // Value is same as label for simplicity
-        points: data.points
+        name: data.name || data.label,
+        points: parseInt(data.points)
       }
     });
     return NextResponse.json(newCategory, { status: 201 });

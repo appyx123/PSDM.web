@@ -5,10 +5,10 @@ import { verifyToken } from '@/lib/auth';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await (params as any);
+    const { id } = await params;
     const data = await request.json();
     const { status, pointsAwarded, rejectionReason } = data;
 
