@@ -45,6 +45,15 @@ export function MembersView({
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<string>('name-asc');
 
+  const availableDepartments = useMemo(() => {
+    const depts = new Set<string>();
+    ['PSDM', 'Media', 'Penalaran', 'Kompres', 'Ristek', 'Humas', 'Trisula'].forEach(d => depts.add(d));
+    members.forEach(m => {
+      if (m.department) depts.add(m.department);
+    });
+    return Array.from(depts).sort();
+  }, [members]);
+
   const processedMembers = useMemo(() => {
     let result = [...members];
 
@@ -217,13 +226,9 @@ export function MembersView({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Semua</SelectItem>
-              <SelectItem value="PSDM">PSDM</SelectItem>
-              <SelectItem value="Media">Media</SelectItem>
-              <SelectItem value="Penalaran">Penalaran</SelectItem>
-              <SelectItem value="Kompres">Kompres</SelectItem>
-              <SelectItem value="Ristek">Ristek</SelectItem>
-              <SelectItem value="Humas">Humas</SelectItem>
-              <SelectItem value="Trisula">Trisula</SelectItem>
+              {availableDepartments.map(d => (
+                <SelectItem key={d} value={d}>{d}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

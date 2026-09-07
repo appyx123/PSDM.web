@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Trash2, Plus, Check, AlertCircle, Loader2, ShieldCheck, Mail, Key, Save } from 'lucide-react';
+import { Users, Trash2, Plus, Check, AlertCircle, Loader2, ShieldCheck, Mail, Key, Save, Building2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +25,13 @@ export function AdminUsersView() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // PJ Mapping State
+  // PJ Mapping & Department State
   const [pjMapping, setPjMapping] = useState<Record<string, string>>({});
   const [departments, setDepartments] = useState<string[]>([]);
+  const [departmentCounts, setDepartmentCounts] = useState<Record<string, number>>({});
+  const [newDeptName, setNewDeptName] = useState('');
+  const [isDeptSubmitting, setIsDeptSubmitting] = useState(false);
+  const [isDeletingDept, setIsDeletingDept] = useState<string | null>(null);
   const [isPjLoading, setIsPjLoading] = useState(false);
   const [isSavingPj, setIsSavingPj] = useState(false);
 
@@ -46,20 +50,20 @@ export function AdminUsersView() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [aRes, meRes, mRes, pRes] = await Promise.all([
+      const [aRes, meRes, dRes, pRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/auth/me'),
-        fetch('/api/members'),
+        fetch('/api/admin/departments'),
         fetch('/api/admin/settings/pj-mapping')
       ]);
       
       if (aRes.ok) setAdmins(await aRes.json());
       if (meRes.ok) setCurrentUser(await meRes.json());
       
-      if (mRes.ok) {
-        const membersData = await mRes.json();
-        const depts = Array.from(new Set(membersData.map((m: any) => m.department))).filter(Boolean) as string[];
-        setDepartments(depts.sort());
+      if (dRes.ok) {
+        const dData = await dRes.json();
+        setDepartments(dData.departments || []);
+        setDepartmentCounts(dData.counts || {});
       }
       
       if (pRes.ok) setPjMapping(await pRes.json());
@@ -67,6 +71,56 @@ export function AdminUsersView() {
       console.error('Fetch error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDeptName.trim()) return;
+    setIsDeptSubmitting(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/admin/departments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newDeptName.trim() })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewDeptName('');
+        setMsg({ type: 'success', text: `Departemen "${newDeptName.trim()}" berhasil ditambahkan.` });
+        fetchData();
+      } else {
+        setMsg({ type: 'error', text: data.error || 'Gagal menambahkan departemen.' });
+      }
+    } catch {
+      setMsg({ type: 'error', text: 'Terjadi kesalahan sistem.' });
+    } finally {
+      setIsDeptSubmitting(false);
+    }
+  };
+
+  const handleDeleteDepartment = async (deptName: string) => {
+    if (!confirm(`Hapus departemen "${deptName}"? Pastikan tidak ada anggota yang terdaftar di departemen ini.`)) return;
+    setIsDeletingDept(deptName);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/admin/departments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: deptName })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: 'success', text: `Departemen "${deptName}" berhasil dihapus.` });
+        fetchData();
+      } else {
+        setMsg({ type: 'error', text: data.error || 'Gagal menghapus departemen.' });
+      }
+    } catch {
+      setMsg({ type: 'error', text: 'Terjadi kesalahan sistem.' });
+    } finally {
+      setIsDeletingDept(null);
     }
   };
 
@@ -284,6 +338,88 @@ export function AdminUsersView() {
           </Card>
         </div>
       </div>
+
+      {/* Kelola Departemen Organisasi */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="bg-slate-50/50 border-b">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-indigo-600" />
+            <CardTitle className="text-lg">Kelola Departemen Organisasi</CardTitle>
+          </div>
+          <CardDescription>
+            Tambah atau hapus struktur departemen resmi. Setiap departemen di sini otomatis tersedia pada form input pengurus, filter data, dan pemetaan PJ di bawah.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          {/* Form Tambah Departemen */}
+          <form onSubmit={handleAddDepartment} className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 max-w-md">
+              <Input
+                placeholder="Ketik nama departemen baru (contoh: Kewirausahaan)..."
+                value={newDeptName}
+                onChange={e => setNewDeptName(e.target.value)}
+                required
+                className="h-10"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={isDeptSubmitting || !newDeptName.trim()}
+              className="bg-indigo-600 hover:bg-indigo-700 h-10 px-5 text-white font-semibold flex-shrink-0"
+            >
+              {isDeptSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              Tambah Departemen
+            </Button>
+          </form>
+
+          {/* Daftar Departemen */}
+          <div className="space-y-3">
+            <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Daftar Departemen Aktif ({departments.length})
+            </Label>
+            {departments.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">Belum ada departemen yang terdaftar.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2.5">
+                {departments.map(dept => {
+                  const count = departmentCounts[dept] || 0;
+                  const isTrisula = dept.toLowerCase() === 'trisula';
+                  return (
+                    <div
+                      key={dept}
+                      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-indigo-300 transition-all text-sm font-medium text-slate-800"
+                    >
+                      <span className="font-semibold text-slate-700">{dept}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
+                        {count} pengurus
+                      </span>
+                      {!isTrisula && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDepartment(dept)}
+                          disabled={isDeletingDept === dept}
+                          className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1 rounded-md transition-colors ml-0.5"
+                          title={count > 0 ? `Masih ada ${count} anggota di departemen ini` : `Hapus departemen ${dept}`}
+                        >
+                          {isDeletingDept === dept ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <X className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pemetaan PJ Departemen */}
       <Card className="border-slate-200 shadow-sm">

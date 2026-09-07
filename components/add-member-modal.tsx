@@ -55,6 +55,7 @@ export function AddMemberModal({
   editingMember,
   onUpdate,
 }: AddMemberModalProps) {
+  const [departments, setDepartments] = useState<string[]>(DEPARTMENTS);
   const [formData, setFormData] = useState({
     name: '',
     prn: '',
@@ -62,6 +63,19 @@ export function AddMemberModal({
     position: 'Staf Ahli',
     status: 'AKTIF' as 'AKTIF' | 'ALUMNI' | 'NONAKTIF',
   });
+
+  useEffect(() => {
+    if (open) {
+      fetch('/api/departments')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setDepartments(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [open]);
 
   useEffect(() => {
     if (editingMember) {
@@ -184,7 +198,7 @@ export function AddMemberModal({
                 <SelectValue placeholder={isTrisula ? "Trisula" : "Pilih Departemen"} />
               </SelectTrigger>
               <SelectContent>
-                {DEPARTMENTS.map((dept) => (
+                {departments.map((dept) => (
                   <SelectItem key={dept} value={dept}>
                     {dept}
                   </SelectItem>
