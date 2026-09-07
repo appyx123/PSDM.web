@@ -1,3 +1,5 @@
+export const runtime = 'experimental-edge';
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
@@ -23,7 +25,7 @@ async function verifyToken(token: string): Promise<SessionPayload | null> {
   }
 }
 
-export default async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('session')?.value;
 
