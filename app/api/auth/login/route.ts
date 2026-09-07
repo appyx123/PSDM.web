@@ -2,49 +2,38 @@ export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { signToken, comparePassword, hashPassword } from '@/lib/auth';
+import { signToken, comparePassword } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
-    const { email, prn, password } = await request.json();
+    const body = await request.json();
+    const loginId = (body.prn || body.identifier || '').trim();
+    const password = body.password;
 
-    let user;
-
-    if (email) {
-      // Admin login flow (Super Admin or Admin)
-      user = await prisma.user.findFirst({
-        where: { 
-          email: email.toLowerCase(), 
-          role: { in: ['SUPER_ADMIN', 'ADMIN'] } 
-        }
-      });
-      if (!user) {
-        return NextResponse.json({ error: 'Email atau password salah.' }, { status: 401 });
-      }
-    } else if (prn) {
-      // Pengurus login flow
-      user = await prisma.user.findFirst({
-        where: { prn: prn.toUpperCase(), role: 'PENGURUS' }
-      });
-      if (!user) {
-        return NextResponse.json({ error: 'PRN atau password salah.' }, { status: 401 });
-      }
-    } else {
-      return NextResponse.json({ error: 'Email atau PRN harus diisi.' }, { status: 400 });
+    if (!loginId || !password) {
+      return NextResponse.json({ error: 'PRN / ID Anggota dan password wajib diisi.' }, { status: 400 });
     }
 
-    // Auto-create admin if no users exist yet (first-time setup)
-    // This is handled separately in the seed check below
+    const cleanPrn = loginId.toUpperCase();
+
+    // Universal authentication based on PRN / ID for all roles (SUPER_ADMIN, ADMIN, PENGURUS)
+    const user = await prisma.user.findUnique({
+      where: { prn: cleanPrn }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'PRN / ID Anggota atau password salah.' }, { status: 401 });
+    }
 
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
-      return NextResponse.json({ error: email ? 'Email atau password salah.' : 'PRN atau password salah.' }, { status: 401 });
+      return NextResponse.json({ error: 'PRN / ID Anggota atau password salah.' }, { status: 401 });
     }
 
-    // Check Member status for PENGURUS
-    if (user.role === 'PENGURUS') {
+    // Check Member status for PENGURUS if memberId exists
+    if (user.role === 'PENGURUS' && user.memberId) {
       const member = await prisma.member.findUnique({
-        where: { id: user.memberId || '' }
+        where: { id: user.memberId }
       });
       if (member && member.status !== 'AKTIF') {
         return NextResponse.json({ error: 'Akun tidak aktif. Silakan hubungi admin.' }, { status: 403 });
@@ -56,12 +45,17 @@ export async function POST(request: Request) {
       role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'PENGURUS',
       name: user.name,
       memberId: user.memberId || undefined,
-      prn: user.prn || undefined,
+      prn: user.prn,
     });
 
     const response = NextResponse.json({
       success: true,
-      user: { id: user.id, name: user.name, role: user.role }
+      user: {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        prn: user.prn,
+      }
     });
 
     response.cookies.set('session', token, {

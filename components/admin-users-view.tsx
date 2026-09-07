@@ -58,6 +58,7 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
   // New Admin Form
   const [newAdmin, setNewAdmin] = useState({ 
     name: '', 
+    prn: '',
     email: '', 
     password: '',
     role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN'
@@ -175,7 +176,7 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
         body: JSON.stringify(newAdmin)
       });
       if (res.ok) {
-        setNewAdmin({ name: '', email: '', password: '', role: 'ADMIN' });
+        setNewAdmin({ name: '', prn: '', email: '', password: '', role: 'ADMIN' });
         fetchData();
         setMsg({ type: 'success', text: 'Akun admin baru berhasil ditambahkan.' });
       } else {
@@ -285,8 +286,13 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
                                 <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded uppercase font-black">SAYA</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 mt-1">
-                              <p className="text-xs text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {admin.email}</p>
+                            <div className="flex flex-wrap items-center gap-3 mt-1">
+                              <span className="text-xs font-mono font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+                                {admin.prn || 'NO-PRN'}
+                              </span>
+                              {admin.email && (
+                                <p className="text-xs text-slate-500 flex items-center gap-1"><Mail className="w-3 h-3" /> {admin.email}</p>
+                              )}
                               <p className="text-xs text-slate-500 flex items-center gap-1">
                                 <CalendarDays className="w-3 h-3" /> Dibuat: {new Date(admin.createdAt).toLocaleDateString('id-ID')}
                               </p>
@@ -315,7 +321,7 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
               <Card className="border-slate-200 shadow-sm sticky top-6">
                 <CardHeader className="bg-slate-50/50 border-b">
                   <CardTitle className="text-lg">Tambah Admin Baru</CardTitle>
-                  <CardDescription>Buat akun baru untuk jajaran pengurus PSDM.</CardDescription>
+                  <CardDescription>Buat akun baru untuk jajaran administrator PSDM.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
                   <form onSubmit={handleAddAdmin} className="space-y-4">
@@ -329,13 +335,22 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Alamat Email</Label>
+                      <Label>PRN / ID Admin (Login)</Label>
+                      <Input 
+                        placeholder="Contoh: ADM-01 atau PRN001" 
+                        value={newAdmin.prn} 
+                        onChange={e => setNewAdmin(p => ({ ...p, prn: e.target.value.toUpperCase() }))} 
+                        required 
+                        className="uppercase font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Alamat Email <span className="text-slate-400 text-xs font-normal">(Opsional)</span></Label>
                       <Input 
                         type="email" 
                         placeholder="nama@email.com" 
                         value={newAdmin.email} 
                         onChange={e => setNewAdmin(p => ({ ...p, email: e.target.value }))} 
-                        required 
                       />
                     </div>
                     <div className="space-y-2">

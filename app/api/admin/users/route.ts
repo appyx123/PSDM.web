@@ -24,6 +24,7 @@ export async function GET() {
       id: true,
       name: true,
       email: true,
+      prn: true,
       role: true,
       createdAt: true
     },
@@ -38,22 +39,24 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { name, email, password, role } = await request.json();
+    const { name, prn, email, password, role } = await request.json();
     
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Semua field wajib diisi' }, { status: 400 });
+    if (!name || !prn || !password) {
+      return NextResponse.json({ error: 'Nama, PRN / ID, dan Password wajib diisi' }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const cleanPrn = prn.trim().toUpperCase();
+    const existingUser = await prisma.user.findUnique({ where: { prn: cleanPrn } });
     if (existingUser) {
-      return NextResponse.json({ error: 'Email sudah terdaftar' }, { status: 400 });
+      return NextResponse.json({ error: 'PRN / ID sudah terdaftar pada akun lain' }, { status: 400 });
     }
 
     const hashedPassword = await hashPassword(password);
     const newAdmin = await prisma.user.create({
       data: {
         name,
-        email,
+        prn: cleanPrn,
+        email: email ? email.trim() : null,
         password: hashedPassword,
         role: role || 'ADMIN'
       }
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
       data: {
         userId: session.userId,
         action: 'CREATE_ADMIN',
-        details: `Created new ${newAdmin.role}: ${newAdmin.name} (${newAdmin.email})`
+        details: `Created new ${newAdmin.role}: ${newAdmin.name} (${newAdmin.prn})`
       }
     });
 

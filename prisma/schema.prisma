@@ -52,8 +52,8 @@ model SPLog {
 model User {
   id        String   @id @default(cuid())
   role      String   @default("PENGURUS") // SUPER_ADMIN, ADMIN, PENGURUS
-  email     String?  @unique
-  prn       String?  @unique
+  email     String?
+  prn       String   @unique
   name      String
   password  String
   createdAt DateTime @default(now())

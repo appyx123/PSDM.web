@@ -65,37 +65,41 @@ async function main() {
 
   // 1. Akun Master SUPER_ADMIN
   const superAdmin = await prisma.user.upsert({
-    where: { email: 'superadmin@psdm.com' },
+    where: { prn: 'SA001' },
     update: {
       password: hashedPassword,
       role: 'SUPER_ADMIN',
       name: 'Master Super Admin',
+      email: 'superadmin@psdm.com',
     },
     create: {
+      prn: 'SA001',
       email: 'superadmin@psdm.com',
       name: 'Master Super Admin',
       role: 'SUPER_ADMIN',
       password: hashedPassword,
     },
   });
-  console.log('✅ Akun Master SUPER_ADMIN dibuat:', superAdmin.email);
+  console.log('✅ Akun Master SUPER_ADMIN dibuat:', superAdmin.prn, `(${superAdmin.email})`);
 
   // 2. Akun Master ADMIN
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@psdm.com' },
+    where: { prn: 'ADM001' },
     update: {
       password: hashedPassword,
       role: 'ADMIN',
       name: 'Master Admin',
+      email: 'admin@psdm.com',
     },
     create: {
+      prn: 'ADM001',
       email: 'admin@psdm.com',
       name: 'Master Admin',
       role: 'ADMIN',
       password: hashedPassword,
     },
   });
-  console.log('✅ Akun Master ADMIN dibuat:', admin.email);
+  console.log('✅ Akun Master ADMIN dibuat:', admin.prn, `(${admin.email})`);
 
   // 3. Akun Master PENGURUS
   // Harus memiliki profil Member aktif terlebih dahulu
