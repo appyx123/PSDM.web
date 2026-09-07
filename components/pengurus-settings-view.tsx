@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { facultiesData, faculties, indonesianCities, genders } from '@/lib/profile-data';
 import { getImageUrl } from '@/lib/utils';
+import { optimizeProfileAvatar } from '@/lib/image-optimizer';
 
 interface ProfileFormData {
   fullName: string;
@@ -99,17 +100,22 @@ export function PengurusSettingsView() {
     if (profileErrors.faculty) setProfileErrors(prev => { const e = { ...prev }; delete e.faculty; return e; });
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 1024 * 1024) {
-      setProfileMsg({ type: 'error', text: 'Ukuran file terlalu besar. Maksimal 1 MB' });
+
+    try {
+      setProfileMsg({ type: 'success', text: 'Mengoptimasi & memotong foto profil...' });
+      const optimized = await optimizeProfileAvatar(file, 512, 0.8);
+      setField('avatarPreview', optimized.dataUrl);
+      setProfileMsg({
+        type: 'success',
+        text: `Foto profil dioptimasi (1:1 Square, ${Math.round(optimized.sizeBytes / 1024)} KB, WebP). Klik Simpan untuk menerapkan.`,
+      });
+    } catch (err: any) {
+      setProfileMsg({ type: 'error', text: err.message || 'Gagal memproses foto profil.' });
       e.target.value = '';
-      return;
     }
-    const reader = new FileReader();
-    reader.onload = ev => setField('avatarPreview', ev.target?.result as string);
-    reader.readAsDataURL(file);
   };
 
   const validateProfile = () => {

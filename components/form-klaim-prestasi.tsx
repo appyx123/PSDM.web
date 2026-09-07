@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { Member } from '@/app/page';
+import { optimizeDocumentationImage } from '@/lib/image-optimizer';
 
 interface FormKlaimPrestasiProps {
   member: Member;
@@ -21,15 +22,25 @@ export function FormKlaimPrestasi({ member, onSuccess, onCancel }: FormKlaimPres
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      if (selected.size > 1024 * 1024) {
-        alert('Ukuran file terlalu besar. Maksimal 1 MB');
+      try {
+        if (selected.type.startsWith('image/')) {
+          const optimized = await optimizeDocumentationImage(selected, 1920, 0.8);
+          setFile(optimized.file);
+        } else {
+          if (selected.size > 1024 * 1024) {
+            alert('Ukuran file dokumen melebihi 1 MB');
+            e.target.value = '';
+            return;
+          }
+          setFile(selected);
+        }
+      } catch (err: any) {
+        alert(err.message || 'Gagal memproses file bukti klaim');
         e.target.value = '';
-        return;
       }
-      setFile(selected);
     }
   };
 

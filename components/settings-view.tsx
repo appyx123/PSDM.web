@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { DEFAULT_SETTINGS, SettingKey } from '@/lib/defaultSettings';
 import { getImageUrl } from '@/lib/utils';
+import { optimizeDocumentationImage } from '@/lib/image-optimizer';
 
 export interface PointCategory {
   id: string;
@@ -99,26 +100,27 @@ export function SettingsView() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) {
-      setMsg({ type: 'error', text: 'Ukuran file terlalu besar. Maksimal 1 MB' });
-      e.target.value = '';
-      return;
-    }
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    setMsg(null);
     try {
+      const optimized = await optimizeDocumentationImage(file, 1024, 0.85);
+      const formData = new FormData();
+      formData.append('file', optimized.file);
+
       const res = await fetch('/api/admin/settings/upload-logo', { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
         setSettings(prev => ({ ...prev, APP_LOGO: data.url }));
-        setMsg({ type: 'success', text: 'Logo diunggah.' });
+        setMsg({
+          type: 'success',
+          text: `Logo berhasil dioptimasi (${Math.round(optimized.sizeBytes / 1024)} KB, WebP) dan diunggah.`,
+        });
       } else {
         setMsg({ type: 'error', text: data.error || 'Gagal mengunggah logo.' });
       }
-    } catch {
-      setMsg({ type: 'error', text: 'Terjadi kesalahan saat mengunggah logo.' });
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message || 'Terjadi kesalahan saat mengunggah logo.' });
+      e.target.value = '';
     } finally {
       setIsUploading(false);
     }

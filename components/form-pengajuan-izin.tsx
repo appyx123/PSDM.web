@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, FileText, Loader2, Upload } from 'lucide-react';
 import { Member, Activity } from '@/app/page';
+import { optimizeDocumentationImage } from '@/lib/image-optimizer';
 
 interface FormPengajuanIzinProps {
   open: boolean;
@@ -55,14 +56,26 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
 
   const isEmergencyRequired = isCloseToEvent();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
-    if (selected && selected.size > 1024 * 1024) {
-      alert('Ukuran file terlalu besar. Maksimal 1 MB');
+    if (!selected) return;
+
+    try {
+      if (selected.type.startsWith('image/')) {
+        const optimized = await optimizeDocumentationImage(selected, 1920, 0.8);
+        setFile(optimized.file);
+      } else {
+        if (selected.size > 1024 * 1024) {
+          alert('Ukuran file dokumen melebihi 1 MB');
+          e.target.value = '';
+          return;
+        }
+        setFile(selected);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Gagal memproses file bukti.');
       e.target.value = '';
-      return;
     }
-    setFile(selected || null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

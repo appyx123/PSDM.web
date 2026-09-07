@@ -2,8 +2,9 @@ export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import prisma from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin, SUPABASE_BUCKET } from '@/lib/supabase';
+import { supabaseAdmin, SUPABASE_BUCKET, deleteSupabaseStorageFile } from '@/lib/supabase';
 
 async function getAdminSession() {
   const cookieStore = await cookies();
@@ -53,6 +54,18 @@ export async function POST(request: Request) {
     const { data: publicData } = supabaseAdmin.storage
       .from(SUPABASE_BUCKET)
       .getPublicUrl(filePath);
+
+    // Clean up old logo file from Supabase Storage
+    try {
+      const existingLogo = await prisma.systemSetting.findUnique({
+        where: { key: 'APP_LOGO' },
+      });
+      if (existingLogo?.value && existingLogo.value !== publicData.publicUrl) {
+        await deleteSupabaseStorageFile(existingLogo.value);
+      }
+    } catch (cleanErr) {
+      console.warn('Failed to cleanup old logo:', cleanErr);
+    }
 
     return NextResponse.json({ url: publicData.publicUrl });
   } catch (error) {

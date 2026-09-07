@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin, SUPABASE_BUCKET } from '@/lib/supabase';
+import { supabaseAdmin, SUPABASE_BUCKET, deleteSupabaseStorageFile } from '@/lib/supabase';
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -127,6 +127,15 @@ export async function POST(request: Request) {
 
             if (publicData?.publicUrl) {
               imagePath = publicData.publicUrl;
+
+              // Clean up previous avatar from Supabase Storage to prevent orphan files
+              const existingUser = await prisma.user.findUnique({
+                where: { id: session.userId },
+                select: { image: true },
+              });
+              if (existingUser?.image && existingUser.image !== imagePath) {
+                await deleteSupabaseStorageFile(existingUser.image);
+              }
             }
           }
         }
