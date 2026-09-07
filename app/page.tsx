@@ -116,13 +116,13 @@ interface SessionUser {
 }
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'verification' | 'perizinan' | 'claims' | 'pengajuan' | 'pelaporan' | 'admin_users'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'verification' | 'perizinan' | 'claims' | 'pengajuan' | 'pelaporan' | 'admin_users' | 'departments' | 'pj_mapping'>('dashboard');
   
   // Sync tab with URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'verification', 'pelaporan', 'perizinan', 'claims', 'pengajuan', 'admin_users'].includes(tab)) {
+    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'verification', 'pelaporan', 'perizinan', 'claims', 'pengajuan', 'admin_users', 'departments', 'pj_mapping'].includes(tab)) {
       // Backwards compatibility: redirect older sub-tabs to unified tabs
       if (tab === 'perizinan' || tab === 'claims') {
         setActiveTab('verification');
@@ -448,7 +448,9 @@ export default function DashboardPage() {
           />
         );
       case 'governance':
-        if (session?.role !== 'SUPER_ADMIN') return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
+        if (session?.role?.toUpperCase() !== 'SUPER_ADMIN') {
+          return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;
+        }
         return (
           <GovernanceView
             members={visibleMembers}
@@ -474,20 +476,22 @@ export default function DashboardPage() {
           />
         );
       case 'admin_users':
-        return (
-          <MembersView
-            members={derivedMembers}
-            searchQuery={searchQuery}
-            onAddMember={handleAddMember}
-            onUpdateMember={handleUpdateMember}
-            onDeleteMember={handleDeleteMember}
-            onRefresh={fetchData}
-            userRole={session?.role}
-            currentUserId={session?.userId}
-          />
-        );
+        if (session?.role?.toUpperCase() !== 'SUPER_ADMIN') {
+          return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;
+        }
+        return <AdminUsersView defaultTab="admins" onTabChange={(t) => handleTabChange(t)} />;
+      case 'departments':
+        if (session?.role?.toUpperCase() !== 'SUPER_ADMIN') {
+          return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;
+        }
+        return <AdminUsersView defaultTab="departments" onTabChange={(t) => handleTabChange(t)} />;
+      case 'pj_mapping':
+        if (session?.role?.toUpperCase() !== 'SUPER_ADMIN') {
+          return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;
+        }
+        return <AdminUsersView defaultTab="pj_mapping" onTabChange={(t) => handleTabChange(t)} />;
       default:
-        return <DashboardView members={derivedMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
+        return <DashboardView members={derivedMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;
     }
   };
 
@@ -504,7 +508,7 @@ export default function DashboardPage() {
   }
 
   // Pengurus view: show only their own profile
-  if (session?.role === 'PENGURUS') {
+  if (session?.role?.toUpperCase() === 'PENGURUS') {
     const myMember = derivedMembers.find(m => m.id === session.memberId);
     return (
       <div className="flex h-screen bg-slate-50">

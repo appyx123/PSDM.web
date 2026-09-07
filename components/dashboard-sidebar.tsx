@@ -1,7 +1,18 @@
 'use client';
 
-import { Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, Star, X, FileText, CheckCircle2, Shield } from 'lucide-react';
+import { 
+  Home, Users, BarChart3, Settings, CalendarDays, ShieldAlert, 
+  Star, X, CheckCircle2, ShieldCheck, Building2, Network 
+} from 'lucide-react';
 import { cn, getImageUrl } from '@/lib/utils';
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: any;
+  section?: string;
+  badge?: string;
+}
 
 interface DashboardSidebarProps {
   activeItem?: string;
@@ -22,19 +33,37 @@ export function DashboardSidebar({
   onClose,
   userRole = 'PENGURUS'
 }: DashboardSidebarProps) {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'members', label: userRole === 'SUPER_ADMIN' ? 'Manajemen SDM' : 'Buku Anggota', icon: Users },
-    { id: 'activities', label: 'Kegiatan', icon: CalendarDays },
+  const normalizedRole = (userRole || '').toUpperCase();
+  const isSuperAdmin = normalizedRole === 'SUPER_ADMIN';
+
+  const menuItems: MenuItem[] = isSuperAdmin ? [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, section: 'MENU UTAMA' },
+    { id: 'members', label: 'Manajemen SDM', icon: Users },
+    { id: 'admin_users', label: 'Kelola Akun Admin', icon: ShieldCheck, section: 'OTORITAS SUPER ADMIN', badge: 'SUPER' },
+    { id: 'departments', label: 'Kelola Departemen', icon: Building2, badge: 'SUPER' },
+    { id: 'pj_mapping', label: 'PJ Mapping', icon: Network, badge: 'SUPER' },
+    { id: 'governance', label: 'Manajemen SP (EWS)', icon: ShieldAlert, badge: 'SUPER' },
+    { id: 'activities', label: 'Kegiatan', icon: CalendarDays, section: 'OPERASIONAL' },
     { id: 'verification', label: 'Verifikasi Berkas', icon: CheckCircle2 },
     { id: 'evaluasi', label: 'Mutasi Poin', icon: Star },
     { id: 'reports', label: 'Laporan & Evaluasi', icon: BarChart3 },
-    { id: 'settings', label: 'Pengaturan', icon: Settings },
+    { id: 'settings', label: 'Konfigurasi Sistem', icon: Settings, section: 'PENGATURAN' },
+  ] : [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, section: 'MENU UTAMA' },
+    { id: 'members', label: 'Buku Anggota', icon: Users },
+    { id: 'activities', label: 'Kegiatan', icon: CalendarDays, section: 'OPERASIONAL' },
+    { id: 'verification', label: 'Verifikasi Berkas', icon: CheckCircle2 },
+    { id: 'evaluasi', label: 'Mutasi Poin', icon: Star },
+    { id: 'reports', label: 'Laporan & Evaluasi', icon: BarChart3 },
+    { id: 'settings', label: 'Pengaturan', icon: Settings, section: 'PENGATURAN' },
   ];
 
-  if (userRole === 'SUPER_ADMIN') {
-    menuItems.splice(3, 0, { id: 'governance', label: 'Tata Kelola (EWS)', icon: ShieldAlert });
-  }
+  const isItemActive = (itemId: string) => {
+    if (activeItem === itemId) return true;
+    if (itemId === 'verification' && (activeItem === 'perizinan' || activeItem === 'claims')) return true;
+    if (itemId === 'admin_users' && activeItem === 'admins') return true;
+    return false;
+  };
 
   return (
     <>
@@ -74,27 +103,40 @@ export function DashboardSidebar({
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.id;
+            const isActive = isItemActive(item.id);
             return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onItemClick?.(item.id);
-                  if (window.innerWidth < 768) onClose?.();
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer',
-                  isActive
-                    ? 'bg-indigo-700 text-white'
-                    : 'text-indigo-100 hover:bg-indigo-800'
+              <div key={item.id}>
+                {item.section && (
+                  <p className="text-[10px] font-bold text-indigo-300/60 uppercase tracking-widest px-3 pt-3 pb-1">
+                    {item.section}
+                  </p>
                 )}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-              </button>
+                <button
+                  onClick={() => {
+                    onItemClick?.(item.id);
+                    if (window.innerWidth < 768) onClose?.();
+                  }}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer text-left',
+                    isActive
+                      ? 'bg-indigo-700 text-white shadow-sm font-semibold'
+                      : 'text-indigo-100 hover:bg-indigo-800/80 hover:text-white'
+                  )}
+                >
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium truncate">{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 border border-purple-400/40 flex-shrink-0">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              </div>
             );
           })}
         </nav>

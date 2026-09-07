@@ -1,121 +1,122 @@
-# 📜 Laporan Detektif: Pemetaan Hak Akses & Pembagian Kekuasaan Sistem PSDM
+# 📜 Laporan Audit: Pemetaan Hak Akses & Pembagian Kekuasaan Sistem PSDM
 
-> **Tujuan Dokumen:** Bahan rujukan penyusunan aturan pembagian wewenang (*Product Requirement Document* / PRD) agar tidak terjadi tumpang tindih kekuasaan atau kudeta sistem.  
-> **Gaya Bahasa:** Bahasa manusia sehari-hari (analogi kantor & gedung), bebas dari istilah teknis rumit.
+> **Status Sistem:** Semua celah keamanan telah ditambal (Pasca Penertiban & Penataan Menu Baru)  
+> **Tujuan Dokumen:** Rujukan transparan pemetaan hak akses (*Role-Based Access Control* / RBAC) untuk penyusunan PRD dan panduan operasional organisasi.
 
 ---
 
-## 🔑 1. Daftar Pemegang Kunci (Tingkatan Jabatan)
+## 🔑 1. Tingkatan Pemegang Kunci Resmi
 
-Di dalam gedung sistem PSDM ini, terdapat **3 tingkatan pemegang kunci** resmi yang diakui:
+Di dalam gedung sistem PSDM ini, pembagian kekuasaan dibagi secara tegas menjadi **3 tingkatan peran**:
 
 ```
                       [ 👑 SUPER ADMIN ]
                    (Pimpinan Tertinggi / Kunci Master)
-                               │
-                               ▼
-                        [ 🔐 ADMIN ]
-                   (Staf Pengelola / Kunci Ruangan)
-                               │
-                               ▼
-                       [ 🎓 PENGURUS ]
-                (Anggota Biasa / Kartu Identitas Tamu)
+                                │
+                                ▼
+                         [ 🔐 ADMIN ]
+                   (Pengawas Lapangan / Kunci Ruangan)
+                                │
+                                ▼
+                        [ 🎓 PENGURUS ]
+                 (Anggota Organisasi / Kartu Identitas Mandiri)
 ```
 
-> **Catatan Struktur:**  
-> Jabatan khusus seperti *Ketua Umum, Sekretaris Umum, Bendahara Umum (Trisula)* serta *Kepala Departemen (Kadep)* dicatat pada profil keanggotaan, namun secara sistem hak akses digitalnya tetap memegang kartu level **Pengurus**.
+> **Catatan Struktur Trisula & Kadep:**  
+> Jabatan struktural organisasi seperti *Ketua Umum, Sekretaris Umum, Bendahara Umum (Trisula)* serta *Kepala Departemen (Kadep)* dicatat dalam data keanggotaan, namun secara hak akses akun digital mereka memegang kartu **Pengurus** agar tata kelola evaluasi tetap dipegang secara independen oleh Tim PSDM.
 
 ---
 
-## 🗺️ 2. Peta Kekuasaan (Apa yang Bisa Dilihat & Dilakukan)
+## 📊 2. Matriks Wewenang & Batasan (Tabel Perbandingan)
 
-### A. 👑 Super Admin (Pemegang Kunci Master)
-Ibarat **Direktur Utama / Ketua Majelis Tinggi** yang memegang kunci induk seluruh ruangan di gedung ini.
+* **R/W** : **Full Access** (Bisa Melihat, Mengakses, dan Mengubah/Mengeksekusi)
+* **R** : **Read-Only** (Hanya Memantau / Melihat Kaca Pameran)
+* **W** : **Action Only** (Bisa mengajukan formulir permohonan mandiri)
+* **X** : **Dilarang Total** (Pintu dikunci di UI dan diblokir status 401/403 oleh API & *Middleware*)
 
-* **Ruangan yang Bisa Dimasuki:**
-  * **Semua Ruangan Tanpa Batas:** Dashboard Statistik, Buku Anggota, Agenda Kegiatan, Evaluasi & Apresiasi Poin, Meja Perizinan, Meja Verifikasi Klaim, Lemari Laporan Rekap, Ruang Tata Kelola (SP), Pengaturan Sistem, dan Ruang Khusus Kelola Admin & Departemen.
-* **Tombol yang Bisa Ditekan (Aksi):**
-  1. **Mengangkat & Memecat Admin:** Membuat akun admin baru, memilih tingkatannya, atau menghapus admin lama.
-  2. **Menambah & Menghapus Departemen:** Membuka departemen baru (misal: Kewirausahaan) atau menutup departemen yang sudah kosong.
-  3. **Membagi Wilayah Kerja (PJ Mapping):** Menentukan Admin A memegang kendali atas Departemen Humas, Admin B memegang PSDM, dst.
-  4. **Menjatuhkan Vonis Tertinggi (Surat Peringatan / SP):** Menerbitkan SP1, SP2, memasukkan anggota ke program pembinaan (*treatment*), atau membatalkan SP anggota yang sudah bertobat.
-  5. **Mengubah Aturan Main:** Mengganti nama aplikasi, mengganti logo, mengubah rumus pengali denda bolos (*alpha multiplier*), dan mengubah patokan poin.
-
----
-
-### B. 🔐 Admin (Staf Pengelola Harian)
-Ibarat **Petugas Piket & Pengawas Lapangan** yang bertugas menjaga ketertiban operasional harian.
-
-* **Ruangan yang Bisa Dimasuki:**
-  * Ruang Dashboard, Buku Anggota, Agenda Kegiatan, Evaluasi Poin, Meja Perizinan, Meja Verifikasi Klaim, dan Lemari Laporan.
-* **Ruangan yang Dilarang:**
-  * **Ruang Tata Kelola (SP):** Ditutup dari pandangan (pintu disembunyikan).
-  * **Ruang Kelola Admin & Departemen:** Ditutup dari pandangan.
-  * **Ruang Pengaturan Sistem:** Hanya bisa melihat kaca pameran (*read-only*), tidak boleh menyentuh saklar pengaturan.
-* **Tombol yang Bisa Ditekan (Aksi):**
-  1. **Mengelola Data Pengurus:** Menambah pengurus baru secara manual atau impor borongan lewat file Excel.
-  2. **Membuat Agenda & Absensi:** Membuka jadwal rapat/acara baru dan mencatat siapa yang hadir tepat waktu, telat, atau izin.
-  3. **Bagi-Bagi Poin & Denda Manual:** Memberi poin penghargaan jika ada yang berprestasi, atau memotong poin jika seragamnya melanggar aturan.
-  4. **Menyetujui / Menolak Surat Izin:** Memeriksa surat izin sakit atau izin darurat pengurus.
-  5. **Menyetujui / Menolak Klaim Prestasi:** Memeriksa berkas piagam lomba pengurus untuk mencairkan bonus poin.
+| Fitur / Modul Sistem | Super Admin (👑) | Admin (🔐) | Pengurus (🎓) | Keterangan & Proteksi Sistem |
+| :--- | :---: | :---: | :---: | :--- |
+| **Dashboard Statistik Organisasi** | **R** | **R** | **X** | Pengurus dialihkan khusus ke Dashboard Pribadi |
+| **Manajemen SDM (Buku Anggota Master)** | **R/W** | **R/W\*** | **X** | \*Admin kelola data anggota, tapi **dilarang** ubah role pengguna |
+| **Promosi / Mutasi Role Akun** | **R/W** | **X** | **X** | Mengangkat Admin / Super Admin eksklusif Super Admin |
+| **Imunitas Akun Super Admin** | **R/W\*** | **X** | **X** | \*Super Admin kebal dari sentuhan atau kudeta Admin biasa |
+| **Kelola Struktur Departemen** | **R/W** | **X** | **X** | Tambah & hapus departemen via `/api/admin/departments` |
+| **Pemetaan Tugas Wilayah (PJ Mapping)** | **R/W** | **R** | **X** | Menugaskan admin memegang departemen binaan |
+| **Agenda Kegiatan (Buat/Edit/Hapus)** | **R/W** | **R/W** | **R\*** | \*Pengurus hanya membaca jadwal acara di profil pribadinya |
+| **Pencatatan Presensi & Absensi** | **R/W** | **R/W** | **X** | Pengurus diblokir keras mengubah absensi di server |
+| **Verifikasi Berkas: Loket Perizinan** | **R/W** | **R/W\*** | **X** | \*Admin dibatasi otomatis oleh Departemen PJ binaannya |
+| **Verifikasi Berkas: Loket Klaim Prestasi**| **R/W** | **R/W\*** | **X** | \*Admin dibatasi otomatis oleh Departemen PJ binaannya |
+| **Pembatalan Izin yang Disetujui** | **R/W** | **R/W** | **X** | Reset kehadiran dan penetapan sanksi jika izin batal |
+| **Pusat Pengajuan Mandiri (Izin & Klaim)** | **R/W** | **R/W** | **R/W** | Loket mandiri pengurus unggah bukti izin sakit & piagam |
+| **Input Poin Manual (Reward / Denda)** | **R/W** | **R/W** | **X** | Meja kasir poin manual tertutup rapat dari pengurus |
+| **Hapus Riwayat Mutasi Poin Manual** | **R/W** | **R/W** | **X** | Pembatalan log mutasi hanya oleh staf pengelola |
+| **Tata Kelola Sanksi (EWS - Terbitkan SP)** | **R/W** | **X** | **X** | Penerbitan SP digembok khusus Super Admin di middleware |
+| **Program Pembinaan (Treatment Poin)** | **R/W** | **X** | **X** | Program penebusan poin anggota bermasalah |
+| **Laporan, Analisis & Rekapitulasi** | **R/W** | **R/W** | **X** | Unduh laporan PDF & Excel khusus Admin & Super Admin |
+| **Pengaturan Sistem (Rumus & Multiplier)**| **R/W** | **R** | **X** | Admin mode *Read-Only*; tombol Simpan dikunci |
+| **Identitas Web (Nama & Logo)** | **R/W** | **X** | **X** | Penggantian nama dan logo website (Supabase Storage) |
+| **Profil Akun & Ganti Kata Sandi** | **R/W** | **R/W** | **R/W** | Masing-masing akun mengelola kredensialnya sendiri |
 
 ---
 
-### C. 🎓 Pengurus (Anggota Biasa)
-Ibarat **Karyawan / Anggota Organisasi** yang datang ke kantor untuk bekerja dan memeriksa raport pribadinya sendiri.
+## 👑 3. Daftar Rinci Wewenang Super Admin
 
-* **Ruangan yang Bisa Dimasuki:**
-  * Hanya **2 ruangan pribadi** khusus untuk dirinya sendiri:
-    1. **Bilik Raport Pribadi (*Profil & Dashboard*):** Hanya bisa melihat sisa poin miliknya sendiri, rekam jejak kehadiran miliknya sendiri, riwayat perizinan miliknya, dan status sanksi miliknya.
-    2. **Kotak Pengajuan Klaim (*Pelaporan Klaim*):** Meja untuk mengisi formulir klaim prestasi mandiri.
-* **Ruangan yang Dilarang:**
-  * Seluruh dasbor manajemen, daftar seluruh anggota organisasi, lemari laporan pengurus lain, dan meja verifikasi.
-* **Tombol yang Bisa Ditekan (Aksi):**
-  1. **Mengajukan Izin:** Mengisi formulir izin tidak hadir rapat disertai unggahan foto bukti surat dokter/kampus.
-  2. **Mengajukan Klaim Poin:** Mengunggah foto sertifikat juara atau bukti kegiatan organisasi.
-  3. **Mengganti Kata Sandi Pribadi:** Mengubah password login dirinya sendiri.
-  4. **Memperbarui Biodata Mandiri:** Mengisi kota asal, nomor HP/WhatsApp, akun Instagram, dan foto profil sendiri.
-
----
-
-## 🚨 3. Temuan Celah Keamanan (Pintu Belakang yang Terbuka)
-
-Setelah detektif menyisir instalasi pipa dan jalur pintu rahasia di dalam kode, ditemukan **5 celah berbahaya** yang saat ini masih menganga:
-
-### ⚠️ Celah 1: Jalur Siluman "Kudeta Super Admin"
-* **Kondisi:** Di salah satu pintu perubahan akun pengguna, sistem mengizinkan Admin biasa untuk mengubah kata sandi akun mana saja.
-* **Bahayanya:** Tidak ada pengecekan apakah target yang diubah adalah akun pimpinan tertinggi. Seorang Admin biasa yang nakal bisa mengirim perintah ganti password untuk akun Super Admin, lalu mengambil alih kunci utama gedung!
-
-### ⚠️ Celah 2: Satpam Gerbang Depan Lupa Dibawa ke Internet
-* **Kondisi:** Aturan penjaga gerbang utama (file bernama `proxy.ts`) dimasukkan ke dalam daftar file yang ditinggal di laptop lokal (`.gitignore`).
-* **Bahayanya:** Saat web ini tayang di internet (Cloudflare), satpam gerbang depan ini **tidak bertugas**. Sistem sepenuhnya bergantung pada apakah pintu tiap ruangan di dalam dikunci atau tidak.
-
-### ⚠️ Celah 3: Lemari Buku Poin Tidak Dikunci Sama Sekali
-* **Kondisi:** Pintu tempat pencatatan poin manual dan penghapusan poin tidak memeriksa apakah orang yang mengetuk pintu adalah Admin atau bukan.
-* **Bahayanya:** Siapa saja (bahkan pengurus biasa atau orang luar yang tahu alamat pintunya) bisa mengirim formulir untuk menambah 1.000 poin ke akunnya sendiri atau menghapus catatan pelanggaran poin miliknya.
-
-### ⚠️ Celah 4: Pengurus Bisa Mengubah Absensi Sendiri Menjadi "Hadir Tepat Waktu"
-* **Kondisi:** Pada pintu pencatatan presensi agenda kegiatan, kode sistem secara terang-terangan menuliskan izin untuk peran "PENGURUS".
-* **Bahayanya:** Pengurus yang sedikit paham internet bisa mengirim perintah diam-diam untuk mencoret status "Alpha / Bolos" miliknya dan mengubahnya menjadi "Tepat Waktu".
-
-### ⚠️ Celah 5: Pintu Ganda Verifikasi Klaim (Mengabaikan Surat Tugas PJ)
-* **Kondisi:** Ada 2 pintu berbeda untuk menyetujui klaim prestasi pengurus. Pintu pertama memeriksa apakah Admin tersebut memang bertugas di departemen yang bersangkutan. Namun pintu kedua bisa dimasuki oleh Admin mana saja tanpa peduli departemen apa yang diklaim.
-* **Bahayanya:** Pemetaan PJ Departemen yang sudah diatur dengan rapi oleh Super Admin bisa dilewati begitu saja.
+1. **Pemegang Otoritas Role Pengguna (Kekuasaan Eksekutif):**
+   * Menaikkan Pengurus menjadi Admin.
+   * Mengangkat Admin menjadi Super Admin.
+   * Menurunkan jabatan Admin menjadi Pengurus.
+2. **Kekebalan Mutlak (Anti-Coup Protection):**
+   * Akun Super Admin tidak bisa diedit, diganti sandinya, atau dihapus oleh siapapun kecuali oleh pemilik akun itu sendiri saat login.
+   * Sistem mencegah Super Admin menurunkan jabatannya sendiri (*self-lockout protection*).
+3. **Kekuasaan Tata Ruang Departemen:**
+   * Membuka unit departemen baru dan menutup departemen yang sudah kosong.
+4. **Distribusi Kekuasaan (PJ Mapping):**
+   * Menentukan Admin mana yang memegang verifikasi Departemen apa.
+5. **Kekuasaan Sanksi Tertinggi (Yudikatif - EWS):**
+   * Menerbitkan Surat Peringatan (SP1, SP2, SP3).
+   * Memasukkan anggota ke program *treatment* pemulihan poin.
+   * Mengampuni dan membatalkan status sanksi SP.
+6. **Kekuasaan Pembuat Aturan (Legislatif):**
+   * Mengubah rumus nilai poin presensi, penalti alpha, ambang SP, dan kategori penghargaan.
+   * Mengganti nama aplikasi serta mengunggah logo resmi sistem.
+7. **Verifikasi Bebas Lintas Wilayah:**
+   * Memeriksa dan menyetujui izin serta klaim dari seluruh departemen tanpa terhalang filter PJ.
 
 ---
 
-## 🛠️ 4. Tiga Saran Penertiban untuk PRD (Bahasa Awam)
+## 🔐 4. Daftar Rinci Wewenang Admin
 
-Agar pembagian wewenang menjadi adil, tidak tumpang tindih, dan sistem kebal dari "kudeta", ini 3 rekomendasi langkah pembenahan:
+1. **Operasional Harian Kegiatan:**
+   * Menjadwalkan agenda baru dan mengisi absensi kehadiran anggota.
+2. **Operasional Data Pengurus:**
+   * Menambah anggota baru satu per satu atau impor borongan via file Excel (.xlsx).
+   * Ekspor buku anggota ke Excel dan CSV.
+3. **Verifikasi Berkas Wilayah Binaannya:**
+   * Menyetujui atau menolak perizinan sakit/mendesak dari departemen PJ-nya.
+   * Menyetujui atau menolak klaim piagam prestasi anggota departemen PJ-nya.
+4. **Pemberian Poin & Denda Lapangan:**
+   * Menambahkan reward atau punishment poin manual sesuai kategori resmi.
+5. **Akses Laporan:**
+   * Memantau grafik kinerja dan mengunduh laporan PDF/Excel organisasi.
+6. **Pintu Tertutup bagi Admin:**
+   * ❌ Dilarang mengangkat/menurunkan role akun.
+   * ❌ Dilarang mengubah sandi/menghapus Super Admin.
+   * ❌ Dilarang menerbitkan Surat Peringatan (SP).
+   * ❌ Dilarang mengubah pengaturan rumus sistem (hanya *Read-Only*).
+   * ❌ Dilarang menambah/menghapus struktur departemen.
 
-### 1. 🛡️ Pasang Kunci Ganda di Setiap Kamar (Jangan Hanya Andalkan Gerbang Depan)
-* **Konsep:** Setiap ruangan yang berhubungan dengan uang/poin, pemecatan anggota, dan absensi harus punya gembok sendiri. 
-* **Aturan:** Setiap kali ada berkas masuk, petugas kamar harus memeriksa identitas pengirim di tempat: *"Apakah kamu Admin? Mana kartu identitasmu?"*. Jika tidak ada kartu Admin, tolak detik itu juga.
+---
 
-### 2. 👑 Beri Kekebalan Penuh untuk Akun Super Admin
-* **Konsep:** Pimpinan tertinggi tidak boleh bisa diutak-atik oleh bawahannya.
-* **Aturan:** Buat larangan mutlak di kode: Admin biasa dilarang keras mengubah kata sandi, mengubah data, ataupun menghapus akun Super Admin. Kata sandi Super Admin hanya boleh diganti oleh dirinya sendiri saat sedang login.
+## 🎓 5. Daftar Rinci Batasan Pengurus
 
-### 3. 🎯 Satukan Pintu Masuk & Tegakkan Batas Wilayah PJ Departemen
-* **Konsep:** Satu urusan, satu pintu resmi.
-* **Aturan:** Hapus pintu verifikasi cadangan yang longgar. Tegakkan aturan ketat bahwa Admin PJ Humas **hanya berhak** menandatangani surat izin dan klaim dari anggota Humas. Jika ingin mengurusi departemen lain, harus meminjam persetujuan Super Admin.
+1. **Hak Akses Mandiri:**
+   * Memantau saldo poin, rekam jejak presensi, dan status SP pribadi.
+   * Mengajukan izin dan klaim prestasi lewat Pusat Pengajuan.
+   * Mengganti password sendiri dan melengkapi biodata profil sendiri.
+2. **Pintu yang Terkunci Rapat:**
+   * 🚫 **Sidebar Pengelola:** Tidak ada akses ke panel manajemen.
+   * 🚫 **Buku Anggota:** Tidak bisa melihat biodata atau kontak anggota lain.
+   * 🚫 **Absensi:** Dilarang keras mengubah kehadiran diri sendiri (`403 Forbidden`).
+   * 🚫 **Poin:** Dilarang keras menambah poin sendiri (`403 Forbidden`).
+   * 🚫 **Verifikasi:** Tidak bisa memverifikasi pengajuan apapun (`403 Forbidden`).
+   * 🚫 **Pos Satpam Edge:** Seluruh rute manajemen diproteksi langsung di gerbang depan oleh `middleware.ts`.
