@@ -57,8 +57,9 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
-    if (selected && selected.size > 2 * 1024 * 1024) {
-      alert('File terlalu besar. Maksimal 2MB.');
+    if (selected && selected.size > 1024 * 1024) {
+      alert('Ukuran file terlalu besar. Maksimal 1 MB');
+      e.target.value = '';
       return;
     }
     setFile(selected || null);
@@ -85,7 +86,8 @@ export function FormPengajuanIzin({ open, onOpenChange, member, activity, onSucc
         formData.append('file', file);
         const uploadRes = await fetch('/api/uploads', { method: 'POST', body: formData });
         if (!uploadRes.ok) {
-          alert('Gagal mengupload file bukti. Silakan coba lagi.');
+          const errData = await uploadRes.json().catch(() => ({}));
+          alert(errData.error || 'Gagal mengupload file bukti. Silakan coba lagi.');
           setIsSubmitting(false);
           return;
         }

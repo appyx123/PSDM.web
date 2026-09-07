@@ -12,6 +12,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
+    const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'Ukuran file terlalu besar. Maksimal 1 MB' },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const uniqueId = Math.random().toString(36).substring(2, 12);
     const sanitizedName = file.name.replace(/\s+/g, '-');

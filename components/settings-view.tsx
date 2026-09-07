@@ -98,16 +98,27 @@ export function SettingsView() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      setMsg({ type: 'error', text: 'Ukuran file terlalu besar. Maksimal 1 MB' });
+      e.target.value = '';
+      return;
+    }
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
     try {
       const res = await fetch('/api/admin/settings/upload-logo', { method: 'POST', body: formData });
+      const data = await res.json();
       if (res.ok) {
-        const { url } = await res.json();
-        setSettings(prev => ({ ...prev, APP_LOGO: url }));
+        setSettings(prev => ({ ...prev, APP_LOGO: data.url }));
         setMsg({ type: 'success', text: 'Logo diunggah.' });
+      } else {
+        setMsg({ type: 'error', text: data.error || 'Gagal mengunggah logo.' });
       }
+    } catch {
+      setMsg({ type: 'error', text: 'Terjadi kesalahan saat mengunggah logo.' });
     } finally {
       setIsUploading(false);
     }

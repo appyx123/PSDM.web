@@ -102,8 +102,9 @@ export function PengurusSettingsView() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setProfileMsg({ type: 'error', text: 'Ukuran foto maksimal 5MB.' });
+    if (file.size > 1024 * 1024) {
+      setProfileMsg({ type: 'error', text: 'Ukuran file terlalu besar. Maksimal 1 MB' });
+      e.target.value = '';
       return;
     }
     const reader = new FileReader();

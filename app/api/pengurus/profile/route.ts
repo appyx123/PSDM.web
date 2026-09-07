@@ -98,6 +98,15 @@ export async function POST(request: Request) {
             bytes[i] = binaryString.charCodeAt(i);
           }
 
+          // Validasi ukuran maksimal 1 MB
+          const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
+          if (bytes.length > MAX_FILE_SIZE) {
+            return NextResponse.json(
+              { error: 'Ukuran file terlalu besar. Maksimal 1 MB' },
+              { status: 400 }
+            );
+          }
+
           const ext = mimeSubtype === 'jpeg' ? 'jpg' : mimeSubtype;
           const contentType = `image/${mimeSubtype}`;
           const filePath = `avatars/avatar-${session.userId}-${Date.now()}.${ext}`;

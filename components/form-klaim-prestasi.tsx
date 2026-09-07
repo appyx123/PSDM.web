@@ -24,8 +24,8 @@ export function FormKlaimPrestasi({ member, onSuccess, onCancel }: FormKlaimPres
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      if (selected.size > 2 * 1024 * 1024) {
-        alert('Ukuran file maksimal 2MB');
+      if (selected.size > 1024 * 1024) {
+        alert('Ukuran file terlalu besar. Maksimal 1 MB');
         e.target.value = '';
         return;
       }
@@ -51,7 +51,10 @@ export function FormKlaimPrestasi({ member, onSuccess, onCancel }: FormKlaimPres
         body: formData
       });
       
-      if (!uploadRes.ok) throw new Error('Gagal mengupload bukti');
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Gagal mengupload bukti');
+      }
       const uploadData = await uploadRes.json();
       const evidenceUrl = uploadData.url;
 
