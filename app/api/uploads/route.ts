@@ -1,55 +1,7 @@
 export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const fileName = searchParams.get('file');
-
-  if (!fileName) {
-    return new NextResponse('File name is required', { status: 400 });
-  }
-
-  // Security check: prevent directory traversal
-  const safeFileName = path.basename(decodeURIComponent(fileName));
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-
-  // Try decoded filename first, then URL-encoded variant
-  const filePath = path.join(uploadDir, safeFileName);
-
-  try {
-    const fileBuffer = await fs.readFile(filePath);
-
-    // Determine mime type based on extension
-    const ext = path.extname(safeFileName).toLowerCase();
-    let contentType = 'application/octet-stream';
-
-    if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
-    else if (ext === '.png') contentType = 'image/png';
-    else if (ext === '.gif') contentType = 'image/gif';
-    else if (ext === '.webp') contentType = 'image/webp';
-    else if (ext === '.svg') contentType = 'image/svg+xml';
-    else if (ext === '.pdf') contentType = 'application/pdf';
-
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
-  } catch (error: any) {
-    if (error?.code === 'ENOENT') {
-      // File simply doesn't exist (e.g. stale DB reference or deleted file) — quiet 404
-      console.warn(`[uploads] File not found: ${safeFileName}`);
-    } else {
-      // Unexpected error (permissions, disk, etc.) — log in full
-      console.error(`[uploads] Error serving file ${safeFileName}:`, error);
-    }
-    return new NextResponse('File not found', { status: 404 });
-  }
-}
+import { supabaseAdmin, SUPABASE_BUCKET } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
@@ -61,24 +13,29 @@ export async function POST(request: Request) {
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const uniqueId = Math.random().toString(36).substring(2, 12);
+    const sanitizedName = file.name.replace(/\s+/g, '-');
+    const filePath = `evidences/${Date.now()}-${uniqueId}-${sanitizedName}`;
 
-    // Create unique filename
-    const uniqueId = Math.random().toString(36).substring(2, 15);
-    const fileName = `${uniqueId}-${file.name.replace(/\s+/g, '-')}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    const filePath = path.join(uploadDir, fileName);
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(SUPABASE_BUCKET)
+      .upload(filePath, bytes, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: true,
+      });
 
-    // Ensure directory exists
-    await fs.mkdir(uploadDir, { recursive: true });
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      return NextResponse.json({ error: 'Gagal mengupload file ke Supabase' }, { status: 500 });
+    }
 
-    // Write file
-    await fs.writeFile(filePath, buffer);
-    
-    // Return the URL to the file
-    const fileUrl = `/api/uploads?file=${fileName}`;
-    
-    return NextResponse.json({ url: fileUrl, fileName });
+    const { data: publicData } = supabaseAdmin.storage
+      .from(SUPABASE_BUCKET)
+      .getPublicUrl(filePath);
+
+    const publicUrl = publicData.publicUrl;
+
+    return NextResponse.json({ url: publicUrl, fileName: filePath });
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });

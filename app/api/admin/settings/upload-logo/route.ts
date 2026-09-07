@@ -3,8 +3,7 @@ export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { supabaseAdmin, SUPABASE_BUCKET } from '@/lib/supabase';
 
 async function getAdminSession() {
   const cookieStore = await cookies();
@@ -28,19 +27,26 @@ export async function POST(request: Request) {
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const sanitizedName = file.name.replace(/\s+/g, '-');
+    const filePath = `logos/logo-${Date.now()}-${sanitizedName}`;
 
-    // Create uploads directory if it doesn't exist
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (e) {}
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(SUPABASE_BUCKET)
+      .upload(filePath, bytes, {
+        contentType: file.type || 'image/png',
+        upsert: true,
+      });
 
-    const filename = `logo-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    const path = join(uploadDir, filename);
-    await writeFile(path, buffer);
+    if (uploadError) {
+      console.error('Supabase logo upload error:', uploadError);
+      return NextResponse.json({ error: 'Gagal mengupload logo ke Supabase' }, { status: 500 });
+    }
 
-    return NextResponse.json({ url: filename });
+    const { data: publicData } = supabaseAdmin.storage
+      .from(SUPABASE_BUCKET)
+      .getPublicUrl(filePath);
+
+    return NextResponse.json({ url: publicData.publicUrl });
   } catch (error) {
     console.error('Logo upload error:', error);
     return NextResponse.json({ error: 'Failed to upload logo' }, { status: 500 });

@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
-import fs from 'fs/promises';
-import path from 'path';
+import { supabaseAdmin, SUPABASE_BUCKET } from '@/lib/supabase';
 
 async function getSession() {
   const cookieStore = await cookies();
@@ -75,7 +74,7 @@ export async function POST(request: Request) {
       majorProgram,
       phoneNumber,
       instagram,
-      image, // This could be base64 or a path
+      image, // base64 data-url or existing public URL
     } = body;
 
     if (!fullName || !gender || !originCity || !domicileCity || !angkatan || !nim || !faculty || !majorProgram || !phoneNumber) {
@@ -84,40 +83,46 @@ export async function POST(request: Request) {
 
     let imagePath = image;
 
-    // Handle base64 image upload
+    // Handle base64 image upload to Supabase Storage
     if (image && image.startsWith('data:image/')) {
       try {
         const matches = image.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
-          const type = matches[1]; // e.g., png, jpeg, webp
+          const mimeSubtype = matches[1];
           const base64Data = matches[2];
-          const buffer = Buffer.from(base64Data, 'base64');
           
-          const fileName = `avatar-${session.userId}-${Date.now()}.${type === 'jpeg' ? 'jpg' : type}`;
-          const absolutePath = path.join(process.cwd(), 'public', 'uploads', fileName);
+          // Decode base64 to binary buffer/Uint8Array for Edge compatibility
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
 
-          // Save file to public/uploads
-          await fs.writeFile(absolutePath, buffer);
-          
-          // Only store the filename in DB
-          imagePath = fileName;
+          const ext = mimeSubtype === 'jpeg' ? 'jpg' : mimeSubtype;
+          const contentType = `image/${mimeSubtype}`;
+          const filePath = `avatars/avatar-${session.userId}-${Date.now()}.${ext}`;
 
-          // Cleanup old image if exists
-          const oldUser = await prisma.user.findUnique({ where: { id: session.userId }, select: { image: true } });
-          if (oldUser?.image) {
-            try {
-              // Extract filename if it was stored with /uploads/ prefix
-              const oldFileName = oldUser.image.replace('/uploads/', '');
-              const oldAbsolutePath = path.join(process.cwd(), 'public', 'uploads', oldFileName);
-              await fs.unlink(oldAbsolutePath);
-            } catch (err) {
-              console.warn('Could not delete old image:', err);
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from(SUPABASE_BUCKET)
+            .upload(filePath, bytes, {
+              contentType,
+              upsert: true,
+            });
+
+          if (uploadError) {
+            console.error('Supabase profile avatar upload error:', uploadError);
+          } else {
+            const { data: publicData } = supabaseAdmin.storage
+              .from(SUPABASE_BUCKET)
+              .getPublicUrl(filePath);
+
+            if (publicData?.publicUrl) {
+              imagePath = publicData.publicUrl;
             }
           }
         }
       } catch (uploadError) {
-        console.error('File upload error:', uploadError);
-        // Fallback to existing path or null if upload fails
+        console.error('File upload conversion error:', uploadError);
       }
     }
 
