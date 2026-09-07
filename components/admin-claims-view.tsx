@@ -122,14 +122,9 @@ export function AdminClaimsView({ userRole, userId }: AdminClaimsViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Verifikasi Klaim Kegiatan</h1>
-          <p className="text-slate-500 text-sm mt-1">Tinjau dan berikan poin apresiasi untuk laporan kegiatan positif pengurus.</p>
-        </div>
-
-        <Tabs value={filter} onValueChange={(val: any) => setFilter(val)} className="w-full md:w-auto">
-          <TabsList className="grid grid-cols-2 w-full md:w-[300px] bg-slate-100 p-1">
+      <div className="flex justify-end">
+        <Tabs value={filter} onValueChange={(val: any) => setFilter(val)} className="w-full sm:w-auto">
+          <TabsList className="grid grid-cols-2 w-full sm:w-[260px] bg-slate-100 p-1">
             <TabsTrigger value="PENDING" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Clock className="w-4 h-4 mr-2" />
               Pending

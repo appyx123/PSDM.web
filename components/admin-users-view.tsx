@@ -213,40 +213,8 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
     );
   }
 
-  const getHeaderInfo = () => {
-    switch (activeSubTab) {
-      case 'departments':
-        return {
-          title: 'Kelola Departemen Organisasi',
-          desc: 'Tambah atau hapus struktur departemen resmi yang berlaku di sistem.'
-        };
-      case 'pj_mapping':
-        return {
-          title: 'Pemetaan PJ Departemen',
-          desc: 'Tentukan Admin yang bertanggung jawab (PJ) untuk memverifikasi perizinan & klaim tiap departemen.'
-        };
-      default:
-        return {
-          title: 'Kelola Akun Admin',
-          desc: 'Manajemen hak akses khusus untuk jajaran pengurus PSDM (Super Admin & Admin).'
-        };
-    }
-  };
-
-  const header = getHeaderInfo();
-
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{header.title}</h1>
-          <p className="text-slate-500 mt-1">{header.desc}</p>
-        </div>
-        <Badge className="bg-indigo-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider w-fit">
-          <ShieldCheck className="w-3 h-3 mr-1" /> Super Admin Only
-        </Badge>
-      </div>
-
       {msg && (
         <div className={`flex items-center gap-2 p-4 rounded-xl border text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300 ${
           msg.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'
@@ -257,29 +225,34 @@ export function AdminUsersView({ defaultTab = 'admins', onTabChange }: AdminUser
       )}
 
       <Tabs value={activeSubTab} onValueChange={(val) => handleSubTabChange(val as any)} className="w-full">
-        <TabsList className="bg-slate-100 p-1 rounded-xl h-auto border border-slate-200">
-          <TabsTrigger 
-            value="admins" 
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Kelola Akun Admin
-          </TabsTrigger>
-          <TabsTrigger 
-            value="departments" 
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all"
-          >
-            <Building2 className="w-4 h-4" />
-            Kelola Departemen
-          </TabsTrigger>
-          <TabsTrigger 
-            value="pj_mapping" 
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all"
-          >
-            <Network className="w-4 h-4" />
-            Pemetaan PJ
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+          <TabsList className="bg-slate-100 p-1 rounded-xl h-auto border border-slate-200">
+            <TabsTrigger 
+              value="admins" 
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Akun Admin
+            </TabsTrigger>
+            <TabsTrigger 
+              value="departments" 
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all"
+            >
+              <Building2 className="w-4 h-4" />
+              Departemen
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pj_mapping" 
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all"
+            >
+              <Network className="w-4 h-4" />
+              PJ Mapping
+            </TabsTrigger>
+          </TabsList>
+          <Badge className="bg-indigo-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider w-fit self-start sm:self-auto">
+            <ShieldCheck className="w-3 h-3 mr-1" /> Super Admin
+          </Badge>
+        </div>
 
         {/* Tab 1: Akun Admin */}
         <TabsContent value="admins" className="mt-6 focus-visible:outline-none space-y-6">

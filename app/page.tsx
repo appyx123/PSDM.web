@@ -116,13 +116,13 @@ interface SessionUser {
 }
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'verification' | 'perizinan' | 'claims' | 'pengajuan' | 'pelaporan' | 'admin_users' | 'departments' | 'pj_mapping'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'verification' | 'perizinan' | 'claims' | 'pengajuan' | 'pelaporan' | 'organization' | 'admin_users' | 'departments' | 'pj_mapping'>('dashboard');
   
   // Sync tab with URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'verification', 'pelaporan', 'perizinan', 'claims', 'pengajuan', 'admin_users', 'departments', 'pj_mapping'].includes(tab)) {
+    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'verification', 'pelaporan', 'perizinan', 'claims', 'pengajuan', 'organization', 'admin_users', 'departments', 'pj_mapping'].includes(tab)) {
       // Backwards compatibility: redirect older sub-tabs to unified tabs
       if (tab === 'perizinan' || tab === 'claims') {
         setActiveTab('verification');
@@ -475,6 +475,7 @@ export default function DashboardPage() {
             userId={session?.userId} 
           />
         );
+      case 'organization':
       case 'admin_users':
         if (session?.role?.toUpperCase() !== 'SUPER_ADMIN') {
           return <DashboardView members={visibleMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} onTabChange={handleTabChange} />;

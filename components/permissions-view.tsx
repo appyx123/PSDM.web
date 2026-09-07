@@ -145,15 +145,6 @@ export function PermissionsView({ sysSettings, userRole, userId }: PermissionsVi
 
   return (
     <div className="space-y-6 pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-indigo-600" />
-            Manajemen Perizinan
-          </h1>
-          <p className="text-slate-600 mt-1">Kelola persetujuan izin ketidakhadiran pengurus.</p>
-        </div>
-      </div>
 
       {userRole === 'ADMIN' && (
         <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex items-start gap-3">

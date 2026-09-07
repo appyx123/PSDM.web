@@ -111,17 +111,8 @@ export function GovernanceView({ members, onStartTreatment, sysSettings }: Gover
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <ShieldAlert className="w-8 h-8 text-indigo-600" />
-            Tata Kelola & EWS
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Monitoring ambang batas SP otomatis dan penjatuhan sanksi sesuai SOP.
-          </p>
-        </div>
+      {/* Action Header */}
+      <div className="flex justify-end">
         <Button 
           onClick={() => {
             setSpForm({ ...spForm, memberId: '' });

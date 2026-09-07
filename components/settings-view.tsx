@@ -303,13 +303,13 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Pengaturan Sistem</h1>
-          <p className="text-slate-500 text-sm">Konfigurasi parameter operasional PSDM.</p>
+      {isReadOnly && (
+        <div className="flex justify-end">
+          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">
+            <Lock className="w-3 h-3" /> Read-Only Mode
+          </div>
         </div>
-        {isReadOnly && <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100"><Lock className="w-3 h-3" /> Read-Only Mode</div>}
-      </div>
+      )}
 
       {msg && <div className={`p-4 rounded-lg text-sm font-medium ${msg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>{msg.text}</div>}
 

@@ -189,18 +189,8 @@ export function MembersView({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <Users className="w-8 h-8 text-indigo-600" />
-            Manajemen SDM
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Kelola data keanggotaan, jabatan, hak akses peran (Admin/Pengurus), dan pantau profil pengurus.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 md:mt-0">
+      {/* Action Buttons Header */}
+      <div className="flex flex-wrap justify-end items-center gap-2">
           <Button 
             variant="outline" 
             size="sm" 
@@ -238,7 +228,6 @@ export function MembersView({
             Tambah Pengurus
           </Button>
         </div>
-      </div>
 
       {/* Filter & Sort Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-2 lg:flex lg:flex-wrap gap-4 items-end">

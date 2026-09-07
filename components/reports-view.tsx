@@ -181,14 +181,6 @@ export function ReportsView({ members = [], onRefresh, sysSettings }: ReportsVie
 
   return (
     <div className="space-y-6">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Laporan & Analitik</h1>
-        <p className="text-slate-600 mt-1">
-          Analisis data komprehensif dan performa sistem
-        </p>
-      </div>
-
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard

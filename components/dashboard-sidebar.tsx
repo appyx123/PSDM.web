@@ -38,30 +38,28 @@ export function DashboardSidebar({
 
   const menuItems: MenuItem[] = isSuperAdmin ? [
     { id: 'dashboard', label: 'Dashboard', icon: Home, section: 'MENU UTAMA' },
-    { id: 'members', label: 'Manajemen SDM', icon: Users },
-    { id: 'admin_users', label: 'Kelola Akun Admin', icon: ShieldCheck, section: 'OTORITAS SUPER ADMIN', badge: 'SUPER' },
-    { id: 'departments', label: 'Kelola Departemen', icon: Building2, badge: 'SUPER' },
-    { id: 'pj_mapping', label: 'PJ Mapping', icon: Network, badge: 'SUPER' },
-    { id: 'governance', label: 'Manajemen SP (EWS)', icon: ShieldAlert, badge: 'SUPER' },
+    { id: 'members', label: 'Anggota', icon: Users },
+    { id: 'admin_users', label: 'Organisasi', icon: Building2, section: 'OTORITAS SUPER ADMIN', badge: 'SUPER' },
+    { id: 'governance', label: 'Sanksi / SP', icon: ShieldAlert, badge: 'SUPER' },
     { id: 'activities', label: 'Kegiatan', icon: CalendarDays, section: 'OPERASIONAL' },
-    { id: 'verification', label: 'Verifikasi Berkas', icon: CheckCircle2 },
-    { id: 'evaluasi', label: 'Mutasi Poin', icon: Star },
-    { id: 'reports', label: 'Laporan & Evaluasi', icon: BarChart3 },
-    { id: 'settings', label: 'Konfigurasi Sistem', icon: Settings, section: 'PENGATURAN' },
+    { id: 'verification', label: 'Verifikasi', icon: CheckCircle2 },
+    { id: 'evaluasi', label: 'Poin', icon: Star },
+    { id: 'reports', label: 'Laporan', icon: BarChart3 },
+    { id: 'settings', label: 'Pengaturan', icon: Settings, section: 'PENGATURAN' },
   ] : [
     { id: 'dashboard', label: 'Dashboard', icon: Home, section: 'MENU UTAMA' },
-    { id: 'members', label: 'Buku Anggota', icon: Users },
+    { id: 'members', label: 'Anggota', icon: Users },
     { id: 'activities', label: 'Kegiatan', icon: CalendarDays, section: 'OPERASIONAL' },
-    { id: 'verification', label: 'Verifikasi Berkas', icon: CheckCircle2 },
-    { id: 'evaluasi', label: 'Mutasi Poin', icon: Star },
-    { id: 'reports', label: 'Laporan & Evaluasi', icon: BarChart3 },
+    { id: 'verification', label: 'Verifikasi', icon: CheckCircle2 },
+    { id: 'evaluasi', label: 'Poin', icon: Star },
+    { id: 'reports', label: 'Laporan', icon: BarChart3 },
     { id: 'settings', label: 'Pengaturan', icon: Settings, section: 'PENGATURAN' },
   ];
 
   const isItemActive = (itemId: string) => {
     if (activeItem === itemId) return true;
     if (itemId === 'verification' && (activeItem === 'perizinan' || activeItem === 'claims')) return true;
-    if (itemId === 'admin_users' && activeItem === 'admins') return true;
+    if (itemId === 'admin_users' && (activeItem === 'organization' || activeItem === 'admins' || activeItem === 'departments' || activeItem === 'pj_mapping')) return true;
     return false;
   };
 

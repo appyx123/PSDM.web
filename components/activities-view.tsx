@@ -89,36 +89,24 @@ export function ActivitiesView({
 
   return (
     <div className="space-y-6">
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Manajemen Kegiatan</h1>
-          <p className="text-slate-600 mt-1">
-            Kelola kegiatan organisasi dan catat kehadiran anggota
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Buat Kegiatan
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
-            <CalendarDays className="w-6 h-6" />
+      {/* Top Action Bar & Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl px-5 py-3 flex items-center gap-4 shadow-sm w-fit">
+          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+            <CalendarDays className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Kegiatan</p>
-            <p className="text-2xl font-bold text-slate-900">{activities.length}</p>
+            <p className="text-xs font-medium text-slate-500">Total Kegiatan</p>
+            <p className="text-xl font-bold text-slate-900">{activities.length}</p>
           </div>
         </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm self-start sm:self-auto"
+        >
+          <Plus className="w-4 h-4" />
+          Buat Kegiatan
+        </button>
       </div>
 
       {/* Activities Grid */}

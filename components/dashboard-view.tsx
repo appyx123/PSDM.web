@@ -100,17 +100,11 @@ export function DashboardView({ members, searchQuery = '', filteredMembers = [],
 
   return (
     <div className="space-y-8">
-      {/* Page Title */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Ringkasan</h1>
-          <p className="text-slate-500 mt-1">Pantau aktifitas dan performa anggota departemen Anda.</p>
-        </div>
-        <div className="hidden md:block">
-          <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 px-3 py-1 font-semibold">
-            {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </Badge>
-        </div>
+      {/* Top Date Bar */}
+      <div className="flex justify-end">
+        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 px-3 py-1 font-semibold">
+          {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </Badge>
       </div>
 
       {/* Metrics Grid */}
