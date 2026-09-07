@@ -12,13 +12,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const activityId = resolvedParams.id;
     const { memberId, status, isEmergency, emergencyReason } = data;
 
-    // Security check: Only ADMIN or PJ (assuming PJ is also handled)
+    // Security check: Only ADMIN or SUPER_ADMIN
     const cookieStore = await cookies();
     const token = cookieStore.get('session')?.value;
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const session = await verifyToken(token);
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'PENGURUS')) {
-       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+       return NextResponse.json({ error: 'Forbidden: Hanya Admin yang berwenang mencatat presensi' }, { status: 403 });
     }
 
     if (status === null) {

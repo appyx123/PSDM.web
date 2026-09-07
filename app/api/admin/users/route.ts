@@ -91,6 +91,10 @@ export async function DELETE(request: Request) {
     const adminToDelete = await prisma.user.findUnique({ where: { id } });
     if (!adminToDelete) return NextResponse.json({ error: 'Admin tidak ditemukan' }, { status: 404 });
 
+    if (adminToDelete.role === 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Akses ditolak: Akun Super Admin dilindungi dan tidak dapat dihapus.' }, { status: 403 });
+    }
+
     await prisma.user.delete({ where: { id } });
 
     // Auto-cleanup: remove deleted admin from PJ_MAPPING to prevent stale FK references

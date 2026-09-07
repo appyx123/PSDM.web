@@ -136,7 +136,8 @@ export function PointMutationView({ members, onRefresh }: PointMutationViewProps
         fetchPointLogs();
         onRefresh();
       } else {
-        alert('Gagal memverifikasi klaim');
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'Gagal memverifikasi klaim');
       }
     } catch (error) {
       console.error(error);

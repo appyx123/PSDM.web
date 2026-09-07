@@ -2,9 +2,21 @@ export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized: Sesi tidak valid' }, { status: 401 });
+    }
+    const session = await verifyToken(token);
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+      return NextResponse.json({ error: 'Forbidden: Hanya Admin yang dapat memperbarui data anggota' }, { status: 403 });
+    }
+
     const data = await request.json();
     const resolvedParams = await params;
     const id = resolvedParams.id;
@@ -55,6 +67,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized: Sesi tidak valid' }, { status: 401 });
+    }
+    const session = await verifyToken(token);
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+      return NextResponse.json({ error: 'Forbidden: Hanya Admin yang dapat menghapus anggota' }, { status: 403 });
+    }
+
     const resolvedParams = await params;
     await prisma.member.delete({
       where: { id: resolvedParams.id }

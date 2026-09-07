@@ -27,6 +27,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (!claim) return NextResponse.json({ error: 'Claim not found' }, { status: 404 });
     if (claim.status !== 'PENDING') return NextResponse.json({ error: 'Claim already verified' }, { status: 400 });
 
+    // Role-Based Security: Standard Admins can only verify claims for their assigned departments
+    if (session.role === 'ADMIN') {
+      const setting = await prisma.systemSetting.findUnique({ where: { key: 'PJ_MAPPING' } });
+      if (setting && setting.value) {
+        const mapping = JSON.parse(setting.value);
+        if (mapping[claim.member.department] !== session.userId) {
+          return NextResponse.json({ 
+            error: `Forbidden: Anda tidak memiliki otoritas untuk memverifikasi klaim dari departemen ${claim.member.department}.` 
+          }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Forbidden: Konfigurasi PJ Mapping tidak ditemukan.' }, { status: 403 });
+      }
+    }
+
     const updatedClaim = await prisma.pointClaim.update({
       where: { id },
       data: {

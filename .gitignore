@@ -59,7 +59,6 @@ next-env.d.ts
 
 # Scratch & Dev Scripts
 scratch/
-proxy.ts
 test-prisma.ts
 seed-status.ts
 update-status.ts

@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { getSettings } from '@/lib/settings';
 import { PURE_MATRIX } from '@/lib/constants';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -189,6 +191,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const session = await verifyToken(token);
+    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN')) {
+      return NextResponse.json({ error: 'Forbidden: Hanya Admin yang dapat menambah pengurus' }, { status: 403 });
+    }
+
     const data = await request.json();
     const { name, prn, department, position, status } = data;
 
