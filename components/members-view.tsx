@@ -23,6 +23,8 @@ interface MembersViewProps {
   onUpdateMember: (memberId: string, data: any) => void;
   onDeleteMember: (memberId: string) => void;
   onRefresh: () => void;
+  userRole?: string;
+  currentUserId?: string;
 }
 
 export function MembersView({
@@ -32,6 +34,8 @@ export function MembersView({
   onUpdateMember,
   onDeleteMember,
   onRefresh,
+  userRole,
+  currentUserId,
 }: MembersViewProps) {
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -43,6 +47,7 @@ export function MembersView({
   const [filterDept, setFilterDept] = useState<string>('ALL');
   const [filterPos, setFilterPos] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [filterRole, setFilterRole] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<string>('name-asc');
 
   const availableDepartments = useMemo(() => {
@@ -76,6 +81,9 @@ export function MembersView({
     if (filterStatus !== 'ALL') {
       result = result.filter(m => m.status === filterStatus);
     }
+    if (filterRole !== 'ALL') {
+      result = result.filter(m => (m.user?.role || 'PENGURUS') === filterRole);
+    }
 
     // 3. Sorting
     result.sort((a, b) => {
@@ -92,7 +100,25 @@ export function MembersView({
     });
 
     return result;
-  }, [members, searchQuery, filterDept, filterPos, filterStatus, sortBy]);
+  }, [members, searchQuery, filterDept, filterPos, filterStatus, filterRole, sortBy]);
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (res.ok) {
+        onRefresh();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal mengubah hak akses');
+      }
+    } catch {
+      alert('Terjadi kesalahan sistem saat mengubah hak akses.');
+    }
+  };
 
   const handleEditClick = (member: Member) => {
     setEditingMember(member);
@@ -168,10 +194,10 @@ export function MembersView({
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
             <Users className="w-8 h-8 text-indigo-600" />
-            Manajemen Pengurus
+            Manajemen SDM
           </h1>
           <p className="text-slate-600 mt-1">
-            Kelola data keanggotaan, jabatan, dan pantau profil pengurus.
+            Kelola data keanggotaan, jabatan, hak akses peran (Admin/Pengurus), dan pantau profil pengurus.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 md:mt-0">
@@ -254,6 +280,23 @@ export function MembersView({
 
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+             Hak Akses
+          </Label>
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="w-[130px] h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Peran</SelectItem>
+              <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="PENGURUS">Pengurus</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
              Status
           </Label>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -293,12 +336,14 @@ export function MembersView({
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-bold text-slate-400 uppercase">Total Pengurus</p>
+          <p className="text-xs font-bold text-slate-400 uppercase">Total SDM</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{members.length}</p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-bold text-slate-400 uppercase">Aktif</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{members.filter(m => m.status === 'AKTIF').length}</p>
+          <p className="text-xs font-bold text-slate-400 uppercase">Admin / Super Admin</p>
+          <p className="text-2xl font-bold text-purple-600 mt-1">
+            {members.filter(m => m.user?.role === 'ADMIN' || m.user?.role === 'SUPER_ADMIN').length}
+          </p>
         </div>
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold text-slate-400 uppercase">Departemen</p>
@@ -320,6 +365,9 @@ export function MembersView({
             onEdit={handleEditClick}
             onDelete={onDeleteMember}
             onView={handleViewDetail}
+            userRole={userRole}
+            currentUserId={currentUserId}
+            onRoleChange={handleRoleChange}
           />
         ) : (
           <div className="text-center py-20 border border-slate-200 border-dashed rounded-xl bg-slate-50/50">

@@ -17,6 +17,8 @@ import { UserProfileMenuPengurus } from '@/components/user-profile-menu-pengurus
 import { NotificationBell } from '@/components/notification-bell';
 import { PengurusPelaporanView } from '@/components/pengurus-pelaporan-view';
 import { AdminClaimsView } from '@/components/admin-claims-view';
+import { VerificationCenterView } from '@/components/verification-center-view';
+import { SubmissionCenterView } from '@/components/submission-center-view';
 import { getImageUrl } from '@/lib/utils';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -114,14 +116,21 @@ interface SessionUser {
 }
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'perizinan' | 'pelaporan' | 'claims' | 'admin_users'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'reports' | 'settings' | 'activities' | 'governance' | 'evaluasi' | 'verification' | 'perizinan' | 'claims' | 'pengajuan' | 'pelaporan' | 'admin_users'>('dashboard');
   
   // Sync tab with URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'pelaporan', 'perizinan', 'claims', 'admin_users'].includes(tab)) {
-      setActiveTab(tab as any);
+    if (tab && ['dashboard', 'members', 'reports', 'settings', 'activities', 'governance', 'evaluasi', 'verification', 'pelaporan', 'perizinan', 'claims', 'pengajuan', 'admin_users'].includes(tab)) {
+      // Backwards compatibility: redirect older sub-tabs to unified tabs
+      if (tab === 'perizinan' || tab === 'claims') {
+        setActiveTab('verification');
+      } else if (tab === 'pelaporan') {
+        setActiveTab('pengajuan');
+      } else {
+        setActiveTab(tab as any);
+      }
     }
   }, []);
 
@@ -413,10 +422,18 @@ export default function DashboardPage() {
             onUpdateMember={handleUpdateMember}
             onDeleteMember={handleDeleteMember}
             onRefresh={fetchData}
+            userRole={session?.role}
+            currentUserId={session?.userId}
           />
         );
       case 'reports':
-        return <ReportsView members={derivedMembers} />;
+        return (
+          <ReportsView 
+            members={derivedMembers} 
+            onRefresh={fetchData}
+            sysSettings={sysSettings}
+          />
+        );
       case 'settings':
         return <SettingsView />;
       case 'activities':
@@ -446,12 +463,29 @@ export default function DashboardPage() {
             onRefresh={fetchData}
           />
         );
+      case 'verification':
       case 'perizinan':
-        return <PermissionsView sysSettings={sysSettings} userRole={session?.role} userId={session?.userId} />;
       case 'claims':
-        return <AdminClaimsView userRole={session?.role} userId={session?.userId} />;
+        return (
+          <VerificationCenterView 
+            sysSettings={sysSettings} 
+            userRole={session?.role} 
+            userId={session?.userId} 
+          />
+        );
       case 'admin_users':
-        return <AdminUsersView />;
+        return (
+          <MembersView
+            members={derivedMembers}
+            searchQuery={searchQuery}
+            onAddMember={handleAddMember}
+            onUpdateMember={handleUpdateMember}
+            onDeleteMember={handleDeleteMember}
+            onRefresh={fetchData}
+            userRole={session?.role}
+            currentUserId={session?.userId}
+          />
+        );
       default:
         return <DashboardView members={derivedMembers} searchQuery={searchQuery} filteredMembers={filteredMembers} />;
     }
@@ -512,12 +546,12 @@ export default function DashboardPage() {
                         </button>
                         <button 
                           onClick={() => { 
-                            handleTabChange('pelaporan');
+                            handleTabChange('pengajuan');
                             setIsMobileMenuOpen(false);
                           }}
-                          className={`px-6 py-3 text-left text-sm font-medium transition-colors ${activeTab === 'pelaporan' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                          className={`px-6 py-3 text-left text-sm font-medium transition-colors ${activeTab === 'pengajuan' || activeTab === 'pelaporan' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
                         >
-                          Pelaporan Klaim
+                          Pusat Pengajuan
                         </button>
                       </div>
                     </SheetContent>
@@ -544,10 +578,10 @@ export default function DashboardPage() {
                   Profil & Dashboard
                 </button>
                 <button 
-                  onClick={() => handleTabChange('pelaporan')}
-                  className={`text-sm font-medium transition-colors ${activeTab === 'pelaporan' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-500 hover:text-slate-900'}`}
+                  onClick={() => handleTabChange('pengajuan')}
+                  className={`text-sm font-medium transition-colors ${activeTab === 'pengajuan' || activeTab === 'pelaporan' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-500 hover:text-slate-900'}`}
                 >
-                  Pelaporan Klaim
+                  Pusat Pengajuan
                 </button>
               </div>
 
@@ -566,8 +600,8 @@ export default function DashboardPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center h-64 text-slate-500">Memuat profil...</div>
               ) : myMember ? (
-                activeTab === 'pelaporan' ? (
-                  <PengurusPelaporanView member={myMember} />
+                activeTab === 'pengajuan' || activeTab === 'pelaporan' ? (
+                  <SubmissionCenterView member={myMember} />
                 ) : (
                   <MemberProfileView 
                     member={myMember} 

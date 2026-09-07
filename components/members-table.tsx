@@ -19,9 +19,12 @@ interface MembersTableProps {
   onEdit?: (member: Member) => void;
   onDelete?: (memberId: string) => void;
   onView?: (member: Member) => void;
+  userRole?: string;
+  currentUserId?: string;
+  onRoleChange?: (userId: string, newRole: string) => Promise<void>;
 }
 
-export function MembersTable({ members, onEdit, onDelete, onView }: MembersTableProps) {
+export function MembersTable({ members, onEdit, onDelete, onView, userRole, currentUserId, onRoleChange }: MembersTableProps) {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -40,13 +43,20 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
             <TableHead className="font-bold text-slate-700">PRN</TableHead>
             <TableHead className="font-bold text-slate-700">Departemen</TableHead>
             <TableHead className="font-bold text-slate-700">Jabatan</TableHead>
+            <TableHead className="font-bold text-slate-700 text-center">Hak Akses</TableHead>
             <TableHead className="font-bold text-slate-700 text-center">Poin</TableHead>
             <TableHead className="font-bold text-slate-700">Status</TableHead>
             <TableHead className="font-bold text-slate-700 text-right pr-6">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {members.map((member) => (
+          {members.map((member) => {
+            const memberUser = member.user;
+            const userRoleVal = memberUser?.role || 'PENGURUS';
+            const isSelf = memberUser?.id === currentUserId;
+            const isSuperAdminAccount = userRoleVal === 'SUPER_ADMIN';
+
+            return (
             <TableRow 
               key={member.id} 
               className={cn(
@@ -83,6 +93,46 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
                 <Badge variant="outline" className="text-[10px] font-bold bg-slate-50 text-slate-600 border-slate-200">
                   {member.position}
                 </Badge>
+              </TableCell>
+              <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                {userRole === 'SUPER_ADMIN' && memberUser && onRoleChange ? (
+                  <select
+                    value={userRoleVal}
+                    disabled={isSelf || (isSuperAdminAccount && !isSelf)}
+                    onChange={(e) => {
+                      if (confirm(`Ubah hak akses ${member.name} menjadi ${e.target.value}?`)) {
+                        onRoleChange(memberUser.id, e.target.value);
+                      }
+                    }}
+                    className={cn(
+                      "text-xs font-bold px-2 py-1 rounded-md border cursor-pointer outline-none transition-colors",
+                      userRoleVal === 'SUPER_ADMIN'
+                        ? "bg-purple-50 text-purple-700 border-purple-200 font-black"
+                        : userRoleVal === 'ADMIN'
+                        ? "bg-indigo-50 text-indigo-700 border-indigo-200 font-bold"
+                        : "bg-slate-50 text-slate-600 border-slate-200",
+                      (isSelf || (isSuperAdminAccount && !isSelf)) && "opacity-75 cursor-not-allowed"
+                    )}
+                  >
+                    <option value="PENGURUS">Pengurus</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                  </select>
+                ) : (
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-[10px] font-bold uppercase",
+                      userRoleVal === 'SUPER_ADMIN' 
+                        ? "bg-purple-50 text-purple-700 border-purple-200" 
+                        : userRoleVal === 'ADMIN'
+                        ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                        : "bg-slate-50 text-slate-600 border-slate-200"
+                    )}
+                  >
+                    {userRoleVal}
+                  </Badge>
+                )}
               </TableCell>
               <TableCell className="text-center">
                 <span className={cn(
@@ -135,7 +185,8 @@ export function MembersTable({ members, onEdit, onDelete, onView }: MembersTable
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>

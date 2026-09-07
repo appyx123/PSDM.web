@@ -24,18 +24,16 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'members', label: 'Members', icon: Users },
+    { id: 'members', label: userRole === 'SUPER_ADMIN' ? 'Manajemen SDM' : 'Buku Anggota', icon: Users },
     { id: 'activities', label: 'Kegiatan', icon: CalendarDays },
-    { id: 'evaluasi', label: 'Evaluasi & Apresiasi', icon: Star },
-    { id: 'perizinan', label: 'Perizinan', icon: FileText },
-    { id: 'claims', label: 'Verifikasi Klaim', icon: CheckCircle2 },
-    { id: 'reports', label: 'Reports', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'verification', label: 'Verifikasi Berkas', icon: CheckCircle2 },
+    { id: 'evaluasi', label: 'Mutasi Poin', icon: Star },
+    { id: 'reports', label: 'Laporan & Evaluasi', icon: BarChart3 },
+    { id: 'settings', label: 'Pengaturan', icon: Settings },
   ];
 
   if (userRole === 'SUPER_ADMIN') {
-    menuItems.splice(3, 0, { id: 'governance', label: 'Tata Kelola', icon: ShieldAlert });
-    menuItems.push({ id: 'admin_users', label: 'Kelola Admin', icon: Shield });
+    menuItems.splice(3, 0, { id: 'governance', label: 'Tata Kelola (EWS)', icon: ShieldAlert });
   }
 
   return (

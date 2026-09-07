@@ -82,17 +82,45 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }, { status: 403 });
     }
 
-    const { password } = await request.json();
-    if (!password || password.length < 6) {
-      return NextResponse.json({ error: 'Password baru minimal 6 karakter.' }, { status: 400 });
+    const body = await request.json();
+    const updateData: any = {};
+
+    // 3. Super Admin can update role
+    if (body.role !== undefined) {
+      if (session.role !== 'SUPER_ADMIN') {
+        return NextResponse.json({ error: 'Akses ditolak: Hanya Super Admin yang dapat mengubah hak akses/role.' }, { status: 403 });
+      }
+      if (!['SUPER_ADMIN', 'ADMIN', 'PENGURUS'].includes(body.role)) {
+        return NextResponse.json({ error: 'Role tidak valid.' }, { status: 400 });
+      }
+      // Super Admin cannot demote themselves to avoid locking out the system
+      if (targetUser.id === session.userId && body.role !== 'SUPER_ADMIN') {
+        return NextResponse.json({ error: 'Anda tidak dapat menurunkan role akun Anda sendiri.' }, { status: 400 });
+      }
+      updateData.role = body.role;
     }
 
-    const hashedPassword = await hashPassword(password);
-    await prisma.user.update({ where: { id }, data: { password: hashedPassword } });
+    // 4. Password update (if provided)
+    if (body.password !== undefined) {
+      if (!body.password || body.password.length < 6) {
+        return NextResponse.json({ error: 'Password baru minimal 6 karakter.' }, { status: 400 });
+      }
+      updateData.password = await hashPassword(body.password);
+    }
 
-    return NextResponse.json({ success: true });
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'Tidak ada data yang diperbarui.' }, { status: 400 });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: { id: true, name: true, role: true, prn: true, email: true }
+    });
+
+    return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {
     console.error('PUT User error:', error);
-    return NextResponse.json({ error: 'Gagal mereset password.' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal memperbarui data user.' }, { status: 500 });
   }
 }
