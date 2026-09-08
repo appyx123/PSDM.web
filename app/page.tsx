@@ -151,7 +151,11 @@ export default function DashboardPage() {
   const [sysSettings, setSysSettings] = useState<any>(null);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
     window.location.href = '/login';
   };
 
@@ -594,6 +598,7 @@ export default function DashboardPage() {
                   userName={session.name}
                   userPrn={session.prn}
                   userImage={(session as any).image}
+                  onLogoutClick={handleLogout}
                 />
               </div>
             </div>

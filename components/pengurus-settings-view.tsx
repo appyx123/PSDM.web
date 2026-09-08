@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { User, Shield, Camera, Check, AlertCircle, Save, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Shield, Camera, Check, AlertCircle, Save, Eye, EyeOff, Loader2, ArrowLeft, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -251,19 +251,37 @@ export function PengurusSettingsView() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => router.push('/')}
-          className="rounded-full hover:bg-slate-200"
-        >
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Pengaturan</h1>
-          <p className="text-slate-500 text-sm mt-1">Kelola profil dan keamanan akun Anda</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.push('/')}
+            className="rounded-full hover:bg-slate-200"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Pengaturan</h1>
+            <p className="text-slate-500 text-sm mt-1">Kelola profil dan keamanan akun Anda</p>
+          </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            try {
+              await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (err) {
+              console.error('Logout error:', err);
+            }
+            window.location.href = '/login';
+          }}
+          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 font-medium"
+        >
+          <LogOut className="w-4 h-4 mr-1.5" />
+          Logout
+        </Button>
       </div>
 
       {/* Tabs */}

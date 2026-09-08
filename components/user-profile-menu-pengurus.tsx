@@ -19,20 +19,32 @@ interface UserProfileMenuPengurusProps {
   userName?: string;
   userPrn?: string;
   userImage?: string;
+  onLogoutClick?: () => void;
 }
 
 export function UserProfileMenuPengurus({
   userName = 'Pengurus',
   userPrn,
   userImage,
+  onLogoutClick,
 }: UserProfileMenuPengurusProps) {
   const router = useRouter();
   const initials = userName.split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase() || '?';
 
   const handleLogout = async () => {
-    document.cookie = 'session=; path=/; max-age=0';
-    router.push('/login');
-    router.refresh();
+    if (onLogoutClick) {
+      onLogoutClick();
+      return;
+    }
+
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout request error:', err);
+    }
+
+    // Hard redirect to clear all client states and trigger server re-authentication
+    window.location.href = '/login';
   };
 
   return (
@@ -56,13 +68,13 @@ export function UserProfileMenuPengurus({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push('/pengurus-profile')}>
+          <DropdownMenuItem onClick={() => router.push('/pengurus-profile')} className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />
             <span>Pengaturan</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>
