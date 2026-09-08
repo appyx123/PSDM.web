@@ -3,13 +3,23 @@ import { PrismaLibSQL } from '@prisma/adapter-libsql';
 import { createClient } from '@libsql/client';
 
 function getValidTursoUrl(url?: string): string {
-  if (!url || typeof url !== 'string') return 'libsql://placeholder-database.turso.io';
-  const trimmed = url.trim();
-  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return 'libsql://placeholder-database.turso.io';
-  if (/^(libsql|wss|ws|https|http):/i.test(trimmed)) {
+  if (!url || typeof url !== 'string') return 'https://placeholder-database.turso.io';
+  let trimmed = url.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return 'https://placeholder-database.turso.io';
+  
+  // Prefer HTTPS over WebSockets (libsql/wss) for serverless/Edge connection pooling
+  if (trimmed.startsWith('libsql://')) {
+    trimmed = trimmed.replace('libsql://', 'https://');
+  } else if (trimmed.startsWith('wss://')) {
+    trimmed = trimmed.replace('wss://', 'https://');
+  } else if (trimmed.startsWith('ws://')) {
+    trimmed = trimmed.replace('ws://', 'http://');
+  }
+
+  if (/^(https|http):/i.test(trimmed)) {
     return trimmed;
   }
-  return `libsql://${trimmed}`;
+  return `https://${trimmed}`;
 }
 
 const prismaClientSingleton = () => {
@@ -32,4 +42,4 @@ const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 export default prisma;
 
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma;
+if (!globalThis.prismaGlobal) globalThis.prismaGlobal = prisma;

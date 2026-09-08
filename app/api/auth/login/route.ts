@@ -71,8 +71,7 @@ export async function POST(request: Request) {
     console.error("[LOGIN ERROR FATAL]:", error);
     return NextResponse.json(
       { 
-        error: error.message || "Terjadi kesalahan sistem.",
-        stack: error.stack 
+        error: "Terjadi kesalahan saat memproses login."
       }, 
       { status: 500 }
     );
