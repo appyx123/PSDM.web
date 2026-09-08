@@ -1,3 +1,5 @@
+'use client';
+ 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MembersTable } from '@/components/members-table';

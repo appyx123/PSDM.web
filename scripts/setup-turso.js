@@ -1,7 +1,7 @@
 const { createClient } = require('@libsql/client');
 const { PrismaClient } = require('@prisma/client');
 const { PrismaLibSQL } = require('@prisma/adapter-libsql');
-const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -61,7 +61,9 @@ async function main() {
 
   console.log('\n👑 [2/3] Mencetak Akun Master (Seeder)...');
   const defaultPassword = 'password';
-  const hashedPassword = await bcrypt.hash(defaultPassword, 12);
+  const salt = crypto.randomBytes(16);
+  const derived = crypto.pbkdf2Sync(defaultPassword, salt, 10000, 32, 'sha256');
+  const hashedPassword = `pbkdf2:10000:${salt.toString('hex')}:${derived.toString('hex')}`;
 
   // 1. Akun Master SUPER_ADMIN
   const superAdmin = await prisma.user.upsert({
