@@ -1,32 +1,46 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-key';
-export const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET_NAME || 'psdm-storage';
-
-let clientInstance: SupabaseClient | null = null;
-
-export function getSupabaseAdmin(): SupabaseClient {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-key';
-
-  if (!clientInstance) {
-    clientInstance = createClient(url, key, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+// Fallback resolver to guarantee a valid HTTP/HTTPS URL during build (e.g. Cloudflare Pages secret omission)
+function resolveUrl(url?: string): string {
+  if (!url || typeof url !== 'string') return 'https://placeholder.supabase.co';
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return 'https://placeholder.supabase.co';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
   }
-  return clientInstance;
+  return `https://${trimmed}`;
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+function resolveKey(key?: string): string {
+  if (!key || typeof key !== 'string') return 'placeholder-key';
+  const trimmed = key.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return 'placeholder-key';
+  return trimmed;
+}
+
+const supabaseUrl = resolveUrl(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseKey = resolveKey(process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY);
+export const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET_NAME || process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME || 'psdm-storage';
+
+// Export canonical supabase client with fallback
+export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
   },
 });
+
+// Backward-compatible alias for admin operations
+export const supabaseAdmin = supabase;
+
+let clientInstance: SupabaseClient | null = null;
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!clientInstance) {
+    clientInstance = supabase;
+  }
+  return clientInstance;
+}
 
 /**
  * Extract storage relative path from a full Supabase URL or relative string
