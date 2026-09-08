@@ -1,12 +1,13 @@
 export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { getSettings } from '@/lib/settings';
 import { PURE_MATRIX } from '@/lib/constants';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, hashPassword } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -26,7 +27,7 @@ export async function GET() {
     const alphaMultiplier = parseFloat(sysSettings?.ALPHA_MULTIPLIER || '2');
     const maxAlphaPenalty = parseFloat(sysSettings?.ALPHA_MAX_PENALTY || '50');
 
-    const processedMembers = await Promise.all(members.map(async (m) => {
+    const processedMembers = await Promise.all(members.map(async (m: any) => {
       let treatmentInfo;
       let currentMember = m;
 
@@ -50,7 +51,7 @@ export async function GET() {
           }
         }
 
-        const manualPoints = m.pointLogs?.reduce((sum, log) => sum + log.points, 0) || 0;
+        const manualPoints = m.pointLogs?.reduce((sum: number, log: any) => sum + log.points, 0) || 0;
         const currentTotalPoints = m.basePoints + activityPoints + manualPoints;
         
         const daysPassed = Math.floor((new Date().getTime() - new Date(m.treatmentStartDate!).getTime()) / (1000 * 60 * 60 * 24));
@@ -207,9 +208,9 @@ export async function POST(request: Request) {
     }
 
     // Hash default password
-    const hashedPassword = await bcrypt.hash('SALAMINOVATOR', 10);
+    const hashedPassword = await hashPassword('password');
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Create Member
       const member = await tx.member.create({
         data: {

@@ -232,7 +232,7 @@ export function ImportMemberModal({ open, onOpenChange, onSuccess }: ImportMembe
               </div>
               <div className="p-3 bg-indigo-50 rounded-lg text-[11px] text-indigo-700 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                Sistem akan membuat akun User otomatis dengan password default: <strong>SALAMINOVATOR</strong>
+                Sistem akan membuat akun User otomatis dengan password default: <strong>password</strong>
               </div>
             </div>
           )}

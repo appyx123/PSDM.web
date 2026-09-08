@@ -1,6 +1,7 @@
 export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 import { verifyToken } from '@/lib/auth';
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
       errors: [] as { row: any; prn: string; reason: string }[]
     };
 
-    const defaultPasswordHash = await hashPassword('SALAMINOVATOR');
+    const defaultPasswordHash = await hashPassword('password');
     const today = new Date().toISOString().split('T')[0];
 
     // Process records
@@ -41,10 +42,35 @@ export async function POST(request: Request) {
           throw new Error('Missing required fields: Name, PRN, or Position');
         }
 
+        const cleanPrn = prn.toString().trim().toUpperCase();
+
         // Validate PRN uniqueness in DB
-        const existingMember = await prisma.member.findUnique({ where: { prn: prn.toString().toUpperCase() } });
+        const existingMember = await prisma.member.findUnique({ 
+          where: { prn: cleanPrn },
+          include: { user: true }
+        });
+
         if (existingMember) {
-          throw new Error(`PRN ${prn} sudah terdaftar.`);
+          if (existingMember.user) {
+            throw new Error(`PRN ${cleanPrn} sudah terdaftar dan memiliki akun.`);
+          }
+          // If member exists but has no user account, create the user account for this member
+          await prisma.user.create({
+            data: {
+              role: 'PENGURUS',
+              prn: cleanPrn,
+              name: existingMember.name || name,
+              password: defaultPasswordHash,
+              memberId: existingMember.id
+            }
+          });
+          results.success++;
+          continue;
+        }
+
+        const existingUser = await prisma.user.findUnique({ where: { prn: cleanPrn } });
+        if (existingUser) {
+          throw new Error(`User dengan PRN ${cleanPrn} sudah terdaftar.`);
         }
 
         // Validate Department for Kadep/Staff
@@ -60,11 +86,11 @@ export async function POST(request: Request) {
         const finalStatus = validStatus.includes(status?.toUpperCase()) ? status.toUpperCase() : 'AKTIF';
 
         // Database Creation in Transaction (per record)
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           const member = await tx.member.create({
             data: {
               name,
-              prn: prn.toString().toUpperCase(),
+              prn: cleanPrn,
               position,
               department: finalDept,
               status: finalStatus,
@@ -76,7 +102,7 @@ export async function POST(request: Request) {
           await tx.user.create({
             data: {
               role: 'PENGURUS',
-              prn: prn.toString().toUpperCase(),
+              prn: cleanPrn,
               name,
               password: defaultPasswordHash,
               memberId: member.id

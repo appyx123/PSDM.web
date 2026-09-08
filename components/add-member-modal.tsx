@@ -132,7 +132,7 @@ export function AddMemberModal({
           <DialogDescription>
             {editingMember 
               ? 'Perbarui informasi jabatan dan departemen pengurus.' 
-              : 'Akun user akan dibuat otomatis dengan password default SALAMINOVATOR.'}
+              : 'Akun user akan dibuat otomatis dengan password default: password.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">

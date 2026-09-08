@@ -79,7 +79,7 @@ export default function LoginPage() {
                 <Input
                   type="text"
                   name="prn"
-                  placeholder="Contoh: SA001, ADM001, atau PRN001"
+                  placeholder="Contoh: PRN001"
                   autoComplete="off"
                   value={prn}
                   onChange={e => setPrn(e.target.value)}

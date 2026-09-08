@@ -158,7 +158,7 @@ export async function POST(request: Request) {
       originCity: originCity === 'Lainnya' ? originCityOther : (originCity || null),
       originCityOther: originCity === 'Lainnya' ? originCityOther : null,
       domicileAddress: domicileAddress?.trim() || null,
-      generation: isNaN(parsedGen) ? null : parsedGen,
+      generation: parsedGen !== null && !isNaN(parsedGen) ? parsedGen : null,
       angkatan,
       nim,
       faculty,
