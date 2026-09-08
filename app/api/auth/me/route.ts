@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, hashPassword, comparePassword, signToken } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { supabaseAdmin, SUPABASE_BUCKET, deleteSupabaseStorageFile } from '@/lib/supabase';
 
 export async function GET() {
   try {
@@ -19,17 +20,29 @@ export async function GET() {
       return NextResponse.json({ error: 'Sesi tidak valid.' }, { status: 401 });
     }
 
-    // Fetch latest user data from DB to get image
+    // Fetch full user profile from DB
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
         id: true,
         role: true,
         name: true,
+        fullName: true,
         email: true,
         prn: true,
         memberId: true,
         image: true,
+        gender: true,
+        originCity: true,
+        originCityOther: true,
+        domicileCity: true,
+        domicileCityOther: true,
+        angkatan: true,
+        nim: true,
+        faculty: true,
+        majorProgram: true,
+        phoneNumber: true,
+        instagram: true,
       }
     });
 
@@ -41,10 +54,22 @@ export async function GET() {
       userId: user.id,
       role: user.role,
       name: user.name,
+      fullName: user.fullName || user.name,
       email: user.email,
       memberId: user.memberId,
       prn: user.prn,
       image: user.image,
+      gender: user.gender,
+      originCity: user.originCity,
+      originCityOther: user.originCityOther,
+      domicileCity: user.domicileCity,
+      domicileCityOther: user.domicileCityOther,
+      angkatan: user.angkatan,
+      nim: user.nim,
+      faculty: user.faculty,
+      majorProgram: user.majorProgram,
+      phoneNumber: user.phoneNumber,
+      instagram: user.instagram,
     });
   } catch (error) {
     console.error('Auth check error:', error);
@@ -66,18 +91,55 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Sesi tidak valid.' }, { status: 401 });
     }
 
-    const { name, email, currentPassword, newPassword } = await request.json();
+    const body = await request.json();
+    const {
+      name,
+      fullName,
+      email,
+      gender,
+      originCity,
+      originCityOther,
+      domicileCity,
+      domicileCityOther,
+      angkatan,
+      nim,
+      faculty,
+      majorProgram,
+      phoneNumber,
+      instagram,
+      image,
+      currentPassword,
+      newPassword
+    } = body;
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
 
-    if (name && name.trim()) {
+    if (typeof name === 'string' && name.trim()) {
       updateData.name = name.trim();
     }
 
+    if (typeof fullName === 'string') {
+      updateData.fullName = fullName.trim();
+      if (!updateData.name && fullName.trim()) {
+        updateData.name = fullName.trim();
+      }
+    }
+
+    if (typeof gender === 'string') updateData.gender = gender;
+    if (typeof originCity === 'string') updateData.originCity = originCity;
+    if (typeof originCityOther === 'string') updateData.originCityOther = originCityOther;
+    if (typeof domicileCity === 'string') updateData.domicileCity = domicileCity;
+    if (typeof domicileCityOther === 'string') updateData.domicileCityOther = domicileCityOther;
+    if (typeof angkatan === 'string') updateData.angkatan = angkatan;
+    if (typeof nim === 'string') updateData.nim = nim;
+    if (typeof faculty === 'string') updateData.faculty = faculty;
+    if (typeof majorProgram === 'string') updateData.majorProgram = majorProgram;
+    if (typeof phoneNumber === 'string') updateData.phoneNumber = phoneNumber;
+    if (typeof instagram === 'string') updateData.instagram = instagram;
+
     if (email && email.trim()) {
       const normalizedEmail = email.trim().toLowerCase();
-      // Check if email already used by another user
       const existing = await prisma.user.findFirst({
         where: { email: normalizedEmail, NOT: { id: payload.userId } }
       });
@@ -87,11 +149,74 @@ export async function PATCH(request: Request) {
       updateData.email = normalizedEmail;
     }
 
+    // Handle base64 image upload to Supabase Storage
+    if (image && typeof image === 'string' && image.startsWith('data:image/')) {
+      try {
+        const matches = image.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          const mimeSubtype = matches[1];
+          const base64Data = matches[2];
+
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+
+          const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
+          if (bytes.length > MAX_FILE_SIZE) {
+            return NextResponse.json(
+              { error: 'Ukuran file terlalu besar. Maksimal 1 MB' },
+              { status: 400 }
+            );
+          }
+
+          const ext = mimeSubtype === 'jpeg' ? 'jpg' : mimeSubtype;
+          const contentType = `image/${mimeSubtype}`;
+          const filePath = `avatars/avatar-${payload.userId}-${Date.now()}.${ext}`;
+
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from(SUPABASE_BUCKET)
+            .upload(filePath, bytes, {
+              contentType,
+              upsert: true,
+            });
+
+          if (uploadError) {
+            console.error('[Supabase Storage] Avatar upload error:', uploadError);
+            return NextResponse.json({ error: 'Gagal mengupload foto ke Supabase Storage' }, { status: 500 });
+          }
+
+          const { data: publicData } = supabaseAdmin.storage
+            .from(SUPABASE_BUCKET)
+            .getPublicUrl(filePath);
+
+          if (publicData?.publicUrl) {
+            updateData.image = publicData.publicUrl;
+
+            // Clean up previous avatar from Supabase Storage
+            const existingUser = await prisma.user.findUnique({
+              where: { id: payload.userId },
+              select: { image: true },
+            });
+            if (existingUser?.image && existingUser.image !== publicData.publicUrl) {
+              await deleteSupabaseStorageFile(existingUser.image);
+            }
+          }
+        }
+      } catch (uploadErr) {
+        console.error('Error processing avatar image:', uploadErr);
+        return NextResponse.json({ error: 'Gagal memproses gambar foto profil.' }, { status: 500 });
+      }
+    } else if (image === '') {
+      // Allow clearing avatar
+      updateData.image = null;
+    }
+
     if (newPassword) {
       if (!currentPassword) {
         return NextResponse.json({ error: 'Password lama diperlukan untuk mengubah password.' }, { status: 400 });
       }
-      // Verify current password
       const currentUser = await prisma.user.findUnique({
         where: { id: payload.userId },
         select: { password: true }
@@ -116,10 +241,30 @@ export async function PATCH(request: Request) {
     const updatedUser = await prisma.user.update({
       where: { id: payload.userId },
       data: updateData,
-      select: { id: true, name: true, email: true, role: true, memberId: true, prn: true, image: true }
+      select: {
+        id: true,
+        name: true,
+        fullName: true,
+        email: true,
+        role: true,
+        memberId: true,
+        prn: true,
+        image: true,
+        gender: true,
+        originCity: true,
+        originCityOther: true,
+        domicileCity: true,
+        domicileCityOther: true,
+        angkatan: true,
+        nim: true,
+        faculty: true,
+        majorProgram: true,
+        phoneNumber: true,
+        instagram: true,
+      }
     });
 
-    // Always re-issue token after any successful update to keep session fresh
+    // Re-issue token after successful update to keep session fresh
     const newToken = await signToken({
       userId: updatedUser.id,
       role: updatedUser.role as any,
@@ -127,6 +272,7 @@ export async function PATCH(request: Request) {
       memberId: updatedUser.memberId ?? undefined,
       prn: updatedUser.prn ?? undefined,
     });
+
     const response = NextResponse.json({ success: true, user: updatedUser });
     response.cookies.set('session', newToken, {
       httpOnly: true,

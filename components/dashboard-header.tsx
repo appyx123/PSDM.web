@@ -10,6 +10,7 @@ interface DashboardHeaderProps {
   userName?: string;
   userEmail?: string;
   userRole?: string;
+  userImage?: string;
   onSearch?: (query: string) => void;
   searchResultCount?: number;
   totalCount?: number;
@@ -22,6 +23,7 @@ export function DashboardHeader({
   userName = 'Admin User',
   userEmail = 'admin@perisai.com',
   userRole = 'ADMIN',
+  userImage,
   onSearch,
   searchResultCount = 0,
   totalCount = 0,
@@ -98,6 +100,7 @@ export function DashboardHeader({
               userName={userName}
               userEmail={userEmail}
               userRole={userRole}
+              userImage={userImage}
               onSettingsClick={() => setProfileSettingsOpen(true)}
               onLogoutClick={onLogout}
             />
@@ -112,12 +115,13 @@ export function DashboardHeader({
         )}
       </header>
 
-      {/* Profile Settings Modal (Admin only) */}
+      {/* Universal Profile Settings Modal (Admin & Super Admin) */}
       <ProfileSettingsModal
         open={profileSettingsOpen}
         onOpenChange={setProfileSettingsOpen}
         userName={userName}
         userEmail={userEmail}
+        userRole={userRole}
       />
     </>
   );

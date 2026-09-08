@@ -649,6 +649,7 @@ export default function DashboardPage() {
             userName={session?.name || 'Admin'}
             userEmail={session?.email || ''}
             userRole={session?.role}
+            userImage={(session as any)?.image}
             onSearch={setSearchQuery}
             searchResultCount={filteredMembers.length}
             totalCount={members.length}
