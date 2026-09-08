@@ -40,18 +40,23 @@ export async function GET() {
         user: m.user ? {
           email: m.user.email,
           image: m.user.image,
-          phoneNumber: m.user.phoneNumber,
-          instagram: m.user.instagram,
+          fullName: m.user.fullName,
+          gender: m.user.gender,
+          birthPlace: m.user.birthPlace,
+          birthDate: m.user.birthDate,
           originCity: m.user.originCity,
+          originCityOther: m.user.originCityOther,
+          domicileAddress: m.user.domicileAddress,
           domicileCity: m.user.domicileCity,
+          domicileCityOther: m.user.domicileCityOther,
+          generation: m.user.generation,
           angkatan: m.user.angkatan,
           nim: m.user.nim,
           faculty: m.user.faculty,
           majorProgram: m.user.majorProgram,
-          generation: m.user.generation,
-          birthPlace: m.user.birthPlace,
-          birthDate: m.user.birthDate,
-          gender: m.user.gender
+          phoneNumber: m.user.phoneNumber,
+          instagram: m.user.instagram,
+          linkedin: m.user.linkedin,
         } : null
       };
     });

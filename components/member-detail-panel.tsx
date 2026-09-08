@@ -1,7 +1,7 @@
 'use client';
 
 import { 
-  X, User, Mail, Phone, Instagram, MapPin, 
+  X, User, Mail, Phone, Instagram, Linkedin, MapPin, 
   GraduationCap, Calendar, Award, ShieldAlert, 
   History, UserCircle, Briefcase, Info 
 } from 'lucide-react';
@@ -25,8 +25,67 @@ export function MemberDetailPanel({ member, open, onOpenChange }: MemberDetailPa
   const user = member.user || {};
   const initials = member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const formatStatus = (status: string) => {
-    return status.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+  const formatBirthInfo = (place?: string | null, dateStr?: string | null) => {
+    let formattedDate = '';
+    if (dateStr) {
+      try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          formattedDate = d.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+          });
+        } else {
+          formattedDate = dateStr;
+        }
+      } catch {
+        formattedDate = dateStr;
+      }
+    }
+
+    if (place && formattedDate) {
+      return `${place}, ${formattedDate}`;
+    }
+    if (place) return place;
+    if (formattedDate) return formattedDate;
+    return '-';
+  };
+
+  const formatJoinDate = (dateStr?: string | null) => {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+      return dateStr;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatCity = (city?: string | null, other?: string | null) => {
+    if (!city) return null;
+    return city === 'Lainnya' ? (other || 'Lainnya') : city;
+  };
+
+  const formatDomicile = () => {
+    const address = user.domicileAddress?.trim();
+    const city = formatCity(user.domicileCity, user.domicileCityOther);
+    if (address && city) return `${address}, ${city}`;
+    if (address) return address;
+    if (city) return city;
+    return '-';
+  };
+
+  const formatOrigin = () => {
+    const city = formatCity(user.originCity, user.originCityOther);
+    return city || '-';
   };
 
   return (
@@ -56,33 +115,38 @@ export function MemberDetailPanel({ member, open, onOpenChange }: MemberDetailPa
                 </div>
               </div>
             </div>
-            {/* The default close button is present in SheetContent, but we can add space for it */}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-8 space-y-10">
-            {/* Data Dasar (Admin) */}
+          <div className="p-8 space-y-9">
+            {/* 1. Informasi Keanggotaan */}
             <section>
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 bg-slate-100 rounded-lg text-slate-500">
+                <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600">
                   <Briefcase className="w-4 h-4" />
                 </div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Data Administrasi</h3>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Informasi Keanggotaan</h3>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 group hover:border-indigo-200 transition-colors">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">PRN / ID Login</p>
-                  <p className="font-mono font-bold text-slate-900">{member.prn}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 group hover:border-indigo-200 transition-colors">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PRN / ID Login</p>
+                  <p className="font-mono font-bold text-slate-900 text-sm">{member.prn || '-'}</p>
                 </div>
-                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 group hover:border-indigo-200 transition-colors">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tanggal Bergabung</p>
-                  <p className="font-bold text-slate-900">{member.joinDate}</p>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 group hover:border-indigo-200 transition-colors">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Generasi</p>
+                  <p className="font-bold text-slate-900 text-sm">
+                    {user.generation !== null && user.generation !== undefined ? `Gen ${user.generation}` : '-'}
+                  </p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 group hover:border-indigo-200 transition-colors">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal Bergabung</p>
+                  <p className="font-bold text-slate-900 text-sm">{formatJoinDate(member.joinDate)}</p>
                 </div>
               </div>
             </section>
 
-            {/* Status & Poin */}
+            {/* 2. Performa & Status */}
             <section>
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-500">
@@ -122,33 +186,130 @@ export function MemberDetailPanel({ member, open, onOpenChange }: MemberDetailPa
               )}
             </section>
 
-            {/* Profil Pribadi */}
+            {/* 3. Informasi Pribadi */}
             <section>
-              <div className="flex items-center gap-2 mb-6">
-                <div className="p-1.5 bg-slate-100 rounded-lg text-slate-500">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
                   <UserCircle className="w-4 h-4" />
                 </div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Profil Pribadi</h3>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Informasi Pribadi</h3>
               </div>
-              <div className="grid grid-cols-2 gap-y-8 gap-x-6">
-                {[
-                  { icon: User, label: 'Jenis Kelamin', value: user.gender },
-                  { icon: MapPin, label: 'Asal / Domisili', value: `${user.originCity || '-'} / ${user.domicileCity || '-'}` },
-                  { icon: GraduationCap, label: 'Akademik', value: `${user.nim || '-'} • ${user.faculty || '-'} • ${user.majorProgram || '-'}` },
-                  { icon: Calendar, label: 'Angkatan', value: user.angkatan },
-                  { icon: Phone, label: 'Kontak WhatsApp', value: user.phoneNumber },
-                  { icon: Instagram, label: 'Instagram', value: user.instagram ? `@${user.instagram.replace('@', '')}` : '-' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-0.5">{item.label}</p>
-                      <p className="text-sm font-bold text-slate-700 leading-snug">{item.value || '-'}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 sm:col-span-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Lengkap</p>
+                  <p className="font-bold text-slate-900 text-sm">{user.fullName || member.name || '-'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tempat & Tanggal Lahir</p>
+                  <p className="font-bold text-slate-900 text-sm">{formatBirthInfo(user.birthPlace, user.birthDate)}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jenis Kelamin</p>
+                  <p className="font-bold text-slate-900 text-sm">{user.gender || '-'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 sm:col-span-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kota Asal</p>
+                  <p className="font-bold text-slate-900 text-sm">{formatOrigin()}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* 4. Data Akademik */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 bg-emerald-50 rounded-lg text-emerald-600">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Data Akademik</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fakultas</p>
+                  <p className="font-bold text-slate-900 text-sm">{user.faculty || '-'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Program Studi</p>
+                  <p className="font-bold text-slate-900 text-sm">{user.majorProgram || '-'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">NIM</p>
+                  <p className="font-mono font-bold text-slate-900 text-sm">{user.nim || '-'}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Angkatan</p>
+                  <p className="font-bold text-slate-900 text-sm">{user.angkatan || '-'}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* 5. Kontak & Sosial Media */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-1.5 bg-purple-50 rounded-lg text-purple-600">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Kontak & Sosial Media</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email</p>
+                  {user.email ? (
+                    <a href={`mailto:${user.email}`} className="text-indigo-600 hover:underline font-bold text-sm truncate block">
+                      {user.email}
+                    </a>
+                  ) : (
+                    <p className="font-bold text-slate-900 text-sm">-</p>
+                  )}
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">No. WhatsApp / Telepon</p>
+                  {user.phoneNumber ? (
+                    <a 
+                      href={`https://wa.me/${user.phoneNumber.replace(/[^0-9]/g, '')}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-emerald-600 hover:underline font-bold text-sm block"
+                    >
+                      {user.phoneNumber}
+                    </a>
+                  ) : (
+                    <p className="font-bold text-slate-900 text-sm">-</p>
+                  )}
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100 sm:col-span-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Alamat Domisili Lengkap</p>
+                  <p className="font-bold text-slate-900 text-sm leading-relaxed">{formatDomicile()}</p>
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">LinkedIn</p>
+                  {user.linkedin ? (
+                    <a 
+                      href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline font-bold text-sm truncate block"
+                    >
+                      {user.linkedin}
+                    </a>
+                  ) : (
+                    <p className="font-bold text-slate-900 text-sm">-</p>
+                  )}
+                </div>
+                <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Instagram</p>
+                  {user.instagram ? (
+                    <a 
+                      href={`https://instagram.com/${user.instagram.replace('@', '')}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-pink-600 hover:underline font-bold text-sm block"
+                    >
+                      @{user.instagram.replace('@', '')}
+                    </a>
+                  ) : (
+                    <p className="font-bold text-slate-900 text-sm">-</p>
+                  )}
+                </div>
               </div>
             </section>
 
