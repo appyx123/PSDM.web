@@ -75,11 +75,11 @@ export default function LoginPage() {
               <input type="password" name="fakepasswordremembered" autoComplete="off" className="hidden" />
 
               <div className="space-y-2">
-                <Label className="text-slate-700 font-medium">PRN / ID Anggota</Label>
+                <Label className="text-slate-700 font-medium">PRN / ID</Label>
                 <Input
                   type="text"
                   name="prn"
-                  placeholder="Contoh: PRN0252 atau ID Anggota"
+                  placeholder="Contoh: SA001, ADM001, atau PRN001"
                   autoComplete="off"
                   value={prn}
                   onChange={e => setPrn(e.target.value)}
@@ -89,10 +89,10 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-700 font-medium">Kata Sandi</Label>
+                <Label className="text-slate-700 font-medium">Password</Label>
                 <PasswordInput
                   name="password"
-                  placeholder="Masukkan kata sandi akun"
+                  placeholder="Masukkan password akun"
                   autoComplete="new-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}

@@ -52,7 +52,7 @@ model SPLog {
 model User {
   id        String   @id @default(cuid())
   role      String   @default("PENGURUS") // SUPER_ADMIN, ADMIN, PENGURUS
-  email     String?
+  email     String?  @unique
   prn       String   @unique
   name      String
   password  String
