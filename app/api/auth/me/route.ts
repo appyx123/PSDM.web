@@ -33,16 +33,21 @@ export async function GET() {
         memberId: true,
         image: true,
         gender: true,
+        birthPlace: true,
+        birthDate: true,
         originCity: true,
         originCityOther: true,
+        domicileAddress: true,
         domicileCity: true,
         domicileCityOther: true,
+        generation: true,
         angkatan: true,
         nim: true,
         faculty: true,
         majorProgram: true,
         phoneNumber: true,
         instagram: true,
+        linkedin: true,
       }
     });
 
@@ -60,16 +65,19 @@ export async function GET() {
       prn: user.prn,
       image: user.image,
       gender: user.gender,
+      birthPlace: user.birthPlace,
+      birthDate: user.birthDate,
       originCity: user.originCity,
       originCityOther: user.originCityOther,
-      domicileCity: user.domicileCity,
-      domicileCityOther: user.domicileCityOther,
+      domicileAddress: user.domicileAddress || user.domicileCity || '',
+      generation: user.generation,
       angkatan: user.angkatan,
       nim: user.nim,
       faculty: user.faculty,
       majorProgram: user.majorProgram,
       phoneNumber: user.phoneNumber,
       instagram: user.instagram,
+      linkedin: user.linkedin,
     });
   } catch (error) {
     console.error('Auth check error:', error);
@@ -97,16 +105,19 @@ export async function PATCH(request: Request) {
       fullName,
       email,
       gender,
+      birthPlace,
+      birthDate,
       originCity,
       originCityOther,
-      domicileCity,
-      domicileCityOther,
+      domicileAddress,
+      generation,
       angkatan,
       nim,
       faculty,
       majorProgram,
       phoneNumber,
       instagram,
+      linkedin,
       image,
       currentPassword,
       newPassword
@@ -127,16 +138,24 @@ export async function PATCH(request: Request) {
     }
 
     if (typeof gender === 'string') updateData.gender = gender;
+    if (typeof birthPlace === 'string') updateData.birthPlace = birthPlace.trim();
+    if (typeof birthDate === 'string') updateData.birthDate = birthDate.trim();
     if (typeof originCity === 'string') updateData.originCity = originCity;
     if (typeof originCityOther === 'string') updateData.originCityOther = originCityOther;
-    if (typeof domicileCity === 'string') updateData.domicileCity = domicileCity;
-    if (typeof domicileCityOther === 'string') updateData.domicileCityOther = domicileCityOther;
-    if (typeof angkatan === 'string') updateData.angkatan = angkatan;
-    if (typeof nim === 'string') updateData.nim = nim;
+    if (typeof domicileAddress === 'string') updateData.domicileAddress = domicileAddress.trim();
+
+    if (generation !== undefined && generation !== null) {
+      const parsedGen = typeof generation === 'number' ? generation : parseInt(String(generation).trim(), 10);
+      updateData.generation = isNaN(parsedGen) ? null : parsedGen;
+    }
+
+    if (typeof angkatan === 'string') updateData.angkatan = angkatan.trim();
+    if (typeof nim === 'string') updateData.nim = nim.trim();
     if (typeof faculty === 'string') updateData.faculty = faculty;
     if (typeof majorProgram === 'string') updateData.majorProgram = majorProgram;
-    if (typeof phoneNumber === 'string') updateData.phoneNumber = phoneNumber;
-    if (typeof instagram === 'string') updateData.instagram = instagram;
+    if (typeof phoneNumber === 'string') updateData.phoneNumber = phoneNumber.trim();
+    if (typeof instagram === 'string') updateData.instagram = instagram.trim();
+    if (typeof linkedin === 'string') updateData.linkedin = linkedin.trim();
 
     if (email && email.trim()) {
       const normalizedEmail = email.trim().toLowerCase();
@@ -209,7 +228,6 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Gagal memproses gambar foto profil.' }, { status: 500 });
       }
     } else if (image === '') {
-      // Allow clearing avatar
       updateData.image = null;
     }
 
@@ -251,16 +269,19 @@ export async function PATCH(request: Request) {
         prn: true,
         image: true,
         gender: true,
+        birthPlace: true,
+        birthDate: true,
         originCity: true,
         originCityOther: true,
-        domicileCity: true,
-        domicileCityOther: true,
+        domicileAddress: true,
+        generation: true,
         angkatan: true,
         nim: true,
         faculty: true,
         majorProgram: true,
         phoneNumber: true,
         instagram: true,
+        linkedin: true,
       }
     });
 

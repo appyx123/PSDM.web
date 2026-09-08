@@ -61,16 +61,21 @@ model User {
   // Profile fields
   fullName           String?
   gender             String?
+  birthPlace         String?
+  birthDate          String?
   originCity         String?
   originCityOther    String?
+  domicileAddress    String?
   domicileCity       String?
   domicileCityOther  String?
+  generation         Int?
   angkatan           String?
   nim                String?
   faculty            String?
   majorProgram       String?
   phoneNumber        String?
   instagram          String?
+  linkedin           String?
   image              String?
 
   memberId  String?  @unique

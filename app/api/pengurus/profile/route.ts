@@ -31,18 +31,22 @@ export async function GET() {
     return NextResponse.json({
       id: user.id,
       name: user.name,
-      fullName: user.fullName,
+      fullName: user.fullName || user.name,
+      prn: user.prn,
       gender: user.gender,
+      birthPlace: user.birthPlace,
+      birthDate: user.birthDate,
       originCity: user.originCity,
       originCityOther: user.originCityOther,
-      domicileCity: user.domicileCity,
-      domicileCityOther: user.domicileCityOther,
+      domicileAddress: user.domicileAddress || user.domicileCity || '',
+      generation: user.generation,
       angkatan: user.angkatan,
       nim: user.nim,
       faculty: user.faculty,
       majorProgram: user.majorProgram,
       phoneNumber: user.phoneNumber,
       instagram: user.instagram,
+      linkedin: user.linkedin,
       image: user.image, 
       email: user.email,
       role: user.role,
@@ -63,42 +67,40 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       fullName,
+      email,
       gender,
+      birthPlace,
+      birthDate,
       originCity,
       originCityOther,
-      domicileCity,
-      domicileCityOther,
+      domicileAddress,
+      generation,
       angkatan,
       nim,
       faculty,
       majorProgram,
       phoneNumber,
       instagram,
+      linkedin,
       image, // base64 data-url or existing public URL
     } = body;
-
-    if (!fullName || !gender || !originCity || !domicileCity || !angkatan || !nim || !faculty || !majorProgram || !phoneNumber) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
 
     let imagePath = image;
 
     // Handle base64 image upload to Supabase Storage
-    if (image && image.startsWith('data:image/')) {
+    if (image && typeof image === 'string' && image.startsWith('data:image/')) {
       try {
         const matches = image.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
           const mimeSubtype = matches[1];
           const base64Data = matches[2];
           
-          // Decode base64 to binary buffer/Uint8Array for Edge compatibility
           const binaryString = atob(base64Data);
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
           }
 
-          // Validasi ukuran maksimal 1 MB
           const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
           if (bytes.length > MAX_FILE_SIZE) {
             return NextResponse.json(
@@ -128,12 +130,11 @@ export async function POST(request: Request) {
             if (publicData?.publicUrl) {
               imagePath = publicData.publicUrl;
 
-              // Clean up previous avatar from Supabase Storage to prevent orphan files
               const existingUser = await prisma.user.findUnique({
                 where: { id: session.userId },
                 select: { image: true },
               });
-              if (existingUser?.image && existingUser.image !== imagePath) {
+              if (existingUser?.image && existingUser.image !== publicData.publicUrl) {
                 await deleteSupabaseStorageFile(existingUser.image);
               }
             }
@@ -144,24 +145,37 @@ export async function POST(request: Request) {
       }
     }
 
+    const parsedGen = generation !== undefined && generation !== null 
+      ? (typeof generation === 'number' ? generation : parseInt(String(generation).trim(), 10)) 
+      : null;
+
+    const updatePayload: Record<string, any> = {
+      name: fullName,
+      fullName,
+      gender,
+      birthPlace: birthPlace?.trim() || null,
+      birthDate: birthDate?.trim() || null,
+      originCity: originCity === 'Lainnya' ? originCityOther : (originCity || null),
+      originCityOther: originCity === 'Lainnya' ? originCityOther : null,
+      domicileAddress: domicileAddress?.trim() || null,
+      generation: isNaN(parsedGen) ? null : parsedGen,
+      angkatan,
+      nim,
+      faculty,
+      majorProgram,
+      phoneNumber,
+      instagram: instagram?.trim() || null,
+      linkedin: linkedin?.trim() || null,
+      image: imagePath,
+    };
+
+    if (email && typeof email === 'string' && email.trim()) {
+      updatePayload.email = email.trim().toLowerCase();
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: session.userId },
-      data: {
-        name: fullName,
-        fullName,
-        gender,
-        originCity: originCity === 'Lainnya' ? originCityOther : originCity,
-        originCityOther: originCity === 'Lainnya' ? originCityOther : null,
-        domicileCity: domicileCity === 'Lainnya' ? domicileCityOther : domicileCity,
-        domicileCityOther: domicileCity === 'Lainnya' ? domicileCityOther : null,
-        angkatan,
-        nim,
-        faculty,
-        majorProgram,
-        phoneNumber,
-        instagram,
-        image: imagePath,
-      },
+      data: updatePayload,
     });
 
     return NextResponse.json({
@@ -170,17 +184,22 @@ export async function POST(request: Request) {
         id: updatedUser.id,
         name: updatedUser.name,
         fullName: updatedUser.fullName,
+        prn: updatedUser.prn,
+        email: updatedUser.email,
         gender: updatedUser.gender,
+        birthPlace: updatedUser.birthPlace,
+        birthDate: updatedUser.birthDate,
         originCity: updatedUser.originCity,
         originCityOther: updatedUser.originCityOther,
-        domicileCity: updatedUser.domicileCity,
-        domicileCityOther: updatedUser.domicileCityOther,
+        domicileAddress: updatedUser.domicileAddress,
+        generation: updatedUser.generation,
         angkatan: updatedUser.angkatan,
         nim: updatedUser.nim,
         faculty: updatedUser.faculty,
         majorProgram: updatedUser.majorProgram,
         phoneNumber: updatedUser.phoneNumber,
         instagram: updatedUser.instagram,
+        linkedin: updatedUser.linkedin,
         image: updatedUser.image,
       },
     });
