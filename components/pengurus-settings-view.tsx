@@ -11,9 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import dynamic from 'next/dynamic';
 import { facultiesData, faculties, indonesianCities, genders } from '@/lib/profile-data';
 import { getImageUrl } from '@/lib/utils';
 import { optimizeProfileAvatar } from '@/lib/image-optimizer';
+import type { CroppedImageResult } from '@/components/profile-cropper-modal';
+
+const ProfileCropperModal = dynamic(
+  () => import('@/components/profile-cropper-modal'),
+  { ssr: false }
+);
 
 interface ProfileFormData {
   fullName: string;
@@ -55,6 +62,9 @@ export function PengurusSettingsView() {
   const [isSavingPw, setIsSavingPw] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const availableMajors = profileData.faculty
@@ -68,7 +78,7 @@ export function PengurusSettingsView() {
         if (res.ok) {
           const data = await res.json();
           setProfileData({
-            fullName: data.fullName || data.name || '',
+            fullName: data.fullName || '',
             gender: data.gender || '',
             originCity: data.originCity || '',
             originCityOther: data.originCityOther || '',
@@ -83,7 +93,9 @@ export function PengurusSettingsView() {
             avatarPreview: data.image || '',
           });
         }
-      } catch (error) { /* silent */ } finally {
+      } catch {
+        // keep empty
+      } finally {
         setIsLoadingProfile(false);
       }
     };
@@ -100,22 +112,41 @@ export function PengurusSettingsView() {
     if (profileErrors.faculty) setProfileErrors(prev => { const e = { ...prev }; delete e.faculty; return e; });
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      setProfileMsg({ type: 'success', text: 'Mengoptimasi & memotong foto profil...' });
-      const optimized = await optimizeProfileAvatar(file, 512, 0.8);
-      setField('avatarPreview', optimized.dataUrl);
-      setProfileMsg({
-        type: 'success',
-        text: `Foto profil dioptimasi (1:1 Square, ${Math.round(optimized.sizeBytes / 1024)} KB, WebP). Klik Simpan untuk menerapkan.`,
-      });
-    } catch (err: any) {
-      setProfileMsg({ type: 'error', text: err.message || 'Gagal memproses foto profil.' });
+    if (!file.type.startsWith('image/')) {
+      setProfileMsg({ type: 'error', text: 'File harus berupa gambar (JPG, PNG, WebP).' });
       e.target.value = '';
+      return;
     }
+
+    if (file.size > 15 * 1024 * 1024) {
+      setProfileMsg({ type: 'error', text: 'Ukuran file gambar mentah maksimal 15 MB.' });
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRawImageSrc(reader.result as string);
+      setCropperOpen(true);
+      e.target.value = '';
+    };
+    reader.onerror = () => {
+      setProfileMsg({ type: 'error', text: 'Gagal membaca file gambar.' });
+      e.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropCompleteResult = (result: CroppedImageResult) => {
+    setField('avatarPreview', result.dataUrl);
+    setProfileMsg({
+      type: 'success',
+      text: `Foto profil berhasil dipotong (${Math.round(result.file.size / 1024)} KB, WebP). Klik 'Simpan Profil' untuk menyimpan perubahan.`,
+    });
   };
 
   const validateProfile = () => {
@@ -502,6 +533,21 @@ export function PengurusSettingsView() {
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Lightweight Client-Side Image Cropper Modal */}
+      {cropperOpen && (
+        <ProfileCropperModal
+          open={cropperOpen}
+          imageSrc={rawImageSrc}
+          onClose={() => {
+            setCropperOpen(false);
+            setRawImageSrc(null);
+          }}
+          onCropCompleteResult={handleCropCompleteResult}
+          cropShape="round"
+          targetSize={512}
+        />
       )}
     </div>
   );
