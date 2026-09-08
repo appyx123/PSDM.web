@@ -31,19 +31,20 @@ export async function POST(request: Request) {
       } as any
     });
 
-    // Create notification for admin
-    const admins = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } });
+    // Create notifications for all admins in bulk (single subrequest)
+    const admins = await prisma.user.findMany({ 
+      where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+      select: { id: true }
+    });
     if (admins.length > 0) {
-      for (const admin of admins) {
-        await prisma.notification.create({
-          data: {
-            userId: admin.id,
-            title: 'Pengajuan Klaim Baru',
-            message: `${session.name} mengajukan klaim kegiatan: ${activityName}`,
-            link: '/?tab=claims'
-          }
-        });
-      }
+      await prisma.notification.createMany({
+        data: admins.map(admin => ({
+          userId: admin.id,
+          title: 'Pengajuan Klaim Baru',
+          message: `${session.name} mengajukan klaim kegiatan: ${activityName}`,
+          link: '/?tab=claims'
+        }))
+      });
     }
 
     return NextResponse.json(claim);

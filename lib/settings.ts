@@ -1,19 +1,50 @@
-import { cache } from 'react';
 import prisma from './prisma';
 import { DEFAULT_SETTINGS, SettingKey } from './defaultSettings';
 
+interface CachedSettings {
+  data: Record<SettingKey, string>;
+  expiresAt: number;
+}
 
-export const getSettings = cache(async () => {
-  const dbSettings = await prisma.systemSetting.findMany();
+declare global {
+  var __psdm_settings_cache: CachedSettings | undefined;
+}
 
-  const settings: Record<string, string> = { ...DEFAULT_SETTINGS };
+const SETTINGS_CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
-  dbSettings.forEach(s => {
-    settings[s.key] = s.value;
-  });
+export function invalidateSettingsCache() {
+  globalThis.__psdm_settings_cache = undefined;
+}
 
-  return settings as Record<SettingKey, string>;
-});
+export async function getSettings(): Promise<Record<SettingKey, string>> {
+  const now = Date.now();
+  if (globalThis.__psdm_settings_cache && globalThis.__psdm_settings_cache.expiresAt > now) {
+    return globalThis.__psdm_settings_cache.data;
+  }
+
+  try {
+    const dbSettings = await prisma.systemSetting.findMany();
+    const settings: Record<string, string> = { ...DEFAULT_SETTINGS };
+
+    dbSettings.forEach(s => {
+      settings[s.key] = s.value;
+    });
+
+    const result = settings as Record<SettingKey, string>;
+    globalThis.__psdm_settings_cache = {
+      data: result,
+      expiresAt: now + SETTINGS_CACHE_TTL_MS
+    };
+
+    return result;
+  } catch (error) {
+    console.warn('Failed to fetch settings from DB, falling back to cache or defaults:', error);
+    if (globalThis.__psdm_settings_cache?.data) {
+      return globalThis.__psdm_settings_cache.data;
+    }
+    return DEFAULT_SETTINGS as Record<SettingKey, string>;
+  }
+}
 
 export async function getSetting(key: SettingKey): Promise<string> {
   const settings = await getSettings();
@@ -42,4 +73,7 @@ export async function updateSetting(key: SettingKey, value: string, adminId: str
       }
     })
   ]);
+
+  // Immediately invalidate cache so all subsequent requests see the new value
+  invalidateSettingsCache();
 }

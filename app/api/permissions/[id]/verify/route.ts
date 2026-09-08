@@ -57,19 +57,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       });
 
       // EWS Check: 3 consecutive leaves
-      // Get all activities sorted by date asc up to this activity
-      const allActivities = await prisma.activity.findMany({
-        orderBy: { date: 'asc' }
+      // Only fetch at most 3 activities up to this activity's date
+      const recentActivities = await prisma.activity.findMany({
+        where: {
+          date: { lte: permission.activity.date }
+        },
+        orderBy: { date: 'desc' },
+        take: 3,
+        select: { id: true }
       });
       
-      const currentIndex = allActivities.findIndex(a => a.id === permission.activityId);
-      if (currentIndex >= 2) {
-        // Check this one and the previous two
-        const last3ActivityIds = [
-          allActivities[currentIndex].id,
-          allActivities[currentIndex - 1].id,
-          allActivities[currentIndex - 2].id
-        ];
+      if (recentActivities.length === 3) {
+        const last3ActivityIds = recentActivities.map(a => a.id);
 
         const attendanceRecords = await prisma.attendanceRecord.findMany({
           where: {

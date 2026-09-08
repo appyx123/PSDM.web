@@ -2,9 +2,6 @@
 
 import { BarChart3, TrendingUp, Users, Award, Calendar, AlertTriangle, FileWarning, Check, Loader2, ShieldAlert } from 'lucide-react';
 import { MetricCard } from '@/components/metric-card';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { Member } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -111,7 +108,9 @@ export function ReportsView({ members = [], onRefresh, sysSettings }: ReportsVie
 
   const sortedDepartments = Object.entries(departmentStats).sort((a, b) => b[1] - a[1]);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     
     // Add title
@@ -142,7 +141,8 @@ export function ReportsView({ members = [], onRefresh, sysSettings }: ReportsVie
     doc.save('laporan-anggota.pdf');
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
+    const XLSX = await import('xlsx');
     const worksheet = XLSX.utils.json_to_sheet(members.map(m => ({
       ID: m.id,
       Nama: m.name,
@@ -157,7 +157,8 @@ export function ReportsView({ members = [], onRefresh, sysSettings }: ReportsVie
     XLSX.writeFile(workbook, "laporan-anggota.xlsx");
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    const XLSX = await import('xlsx');
     const worksheet = XLSX.utils.json_to_sheet(members.map(m => ({
       ID: m.id,
       Nama: m.name,

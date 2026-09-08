@@ -3,9 +3,6 @@
 import { useState } from 'react';
 import { Activity, Member, ActivityScope, AttendanceStatus } from '@/app/page';
 import { CalendarDays, Plus, Download, Users, Trash2, FileSpreadsheet, FileText, Pencil } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { AddActivityModal } from './add-activity-modal';
 import { EditActivityModal } from './edit-activity-modal';
 import { AttendanceModal } from './attendance-modal';
@@ -40,7 +37,8 @@ export function ActivitiesView({
   // Filter only active members for attendance and exports
   const members = allMembers.filter(m => m.status === 'AKTIF');
 
-  const handleExportActivityExcel = (activity: Activity) => {
+  const handleExportActivityExcel = async (activity: Activity) => {
+    const XLSX = await import('xlsx');
     const exportData = members.map(member => {
       const attendance = activity.attendees.find(a => a.memberId === member.id);
       return {
@@ -57,7 +55,9 @@ export function ActivitiesView({
     XLSX.writeFile(workbook, `presensi-${activity.name.replace(/\s+/g, '-').toLowerCase()}.xlsx`);
   };
 
-  const handleExportActivityPDF = (activity: Activity) => {
+  const handleExportActivityPDF = async (activity: Activity) => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     
     doc.setFontSize(18);

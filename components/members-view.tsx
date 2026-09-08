@@ -12,7 +12,6 @@ import {
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
-import * as XLSX from 'xlsx';
 
 import { ImportMemberModal } from '@/components/import-member-modal';
 
@@ -130,7 +129,8 @@ export function MembersView({
     setDetailPanelOpen(true);
   };
 
-  const handleExportXLSX = () => {
+  const handleExportXLSX = async () => {
+    const XLSX = await import('xlsx');
     const exportData = processedMembers.map(m => ({
       'Nama Lengkap': m.name,
       'PRN': m.prn,
