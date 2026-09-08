@@ -67,8 +67,14 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Terjadi kesalahan sistem.' }, { status: 500 });
+  } catch (error: any) {
+    console.error("[LOGIN ERROR FATAL]:", error);
+    return NextResponse.json(
+      { 
+        error: error.message || "Terjadi kesalahan sistem.",
+        stack: error.stack 
+      }, 
+      { status: 500 }
+    );
   }
 }
